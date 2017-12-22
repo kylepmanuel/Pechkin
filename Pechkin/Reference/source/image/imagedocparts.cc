@@ -66,9 +66,7 @@ void ImageCommandLineParser::outputContact(Outputter * o) const {
 	o->beginSection("Contact");
 	o->beginParagraph();
 	o->text("If you experience bugs or want to request new features please visit ");
-	o->link("http://code.google.com/p/wkhtmltopdf/issues/list");
-	o->text(", if you have any problems or comments please feel free to contact me: ");
-	o->link("uuf6429@gmail.com");
+	o->link("https://github.com/wkhtmltopdf/wkhtmltopdf/issues");
 	o->endParagraph();
 	o->endSection();
 }
@@ -78,7 +76,7 @@ void ImageCommandLineParser::outputContact(Outputter * o) const {
   \param o The outputter to output to
 */
 void ImageCommandLineParser::outputDocStart(Outputter * o) const {
-	o->beginSection(QString("wkhtmltoimage ")+QString::number(MAJOR_VERSION)+"."+QString::number(MINOR_VERSION)+"."+QString::number(PATCH_VERSION)+(QString(STRINGIZE(BUILD)).isEmpty()?"":" ")+STRINGIZE(BUILD) + " Manual");
+	o->beginSection("wkhtmltoimage " STRINGIZE(FULL_VERSION) " Manual");
 	o->paragraph("This file documents wkhtmltoimage, a program capable of converting HTML "
 				 "documents into images.");
 	o->endSection();

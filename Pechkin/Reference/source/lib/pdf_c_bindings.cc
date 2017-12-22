@@ -18,11 +18,6 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with wkhtmltopdf.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifdef __WKHTMLTOX_UNDEF_QT_DLL__
-#ifdef QT_DLL
-#undef QT_DLL
-#endif
-#endif
 
 /**
  * \file pdf.h
@@ -33,12 +28,14 @@
 #include <QApplication>
 #include <QWebFrame>
 
+#include <QHash>
+
 #include "dllbegin.inc"
 /**
  * \page pagesettings Setting
  * Settings can be supplied to PDF and image c-bindings using utf-8 encoded strings.
- * This is done by relatively simple reflection on the CropSettins, HeaderFooter, Margin,
- * ImageGlobal, PdfGlobal, PdfObject, Size, and TabelOfContent classes.
+ * This is done by relatively simple reflection on the CropSettings, HeaderFooter, Margin,
+ * ImageGlobal, PdfGlobal, PdfObject, Size, and TableOfContent classes.
  *
  * - The \ref wkhtmltopdf_global_settings corresponds to the PdfGlobal class and is documented in \ref pagePdfGlobal.
  * - The \ref wkhtmltopdf_object_settings corresponds to the PdfGlobal class and is documented in \ref pagePdfObject.
@@ -55,7 +52,7 @@
  * - \b web.printMediaType Should the content be printed using the print media type instead
  *      of the screen media type. Must be either "true" or "false". Has no effect for wkhtmltoimage.
  * - \b web.defaultEncoding What encoding should we guess content is using if they do not
- *      specify it propperly? E.g. "utf-8"
+ *      specify it properly? E.g. "utf-8"
  * - \b web.userStyleSheet Url er path to a user specified style sheet.
  * - \b web.enablePlugins Should we enable NS plugins, must be either "true" or "false".
  *      Enabling this will have limited success.
@@ -65,24 +62,24 @@
  * - \b load.username The user name to use when loging into a website, E.g. "bart"
  * - \b load.password The password to used when logging into a website, E.g. "elbarto"
  * - \b load.jsdelay The mount of time in milliseconds to wait after a page has done loading until
- *      it is actualy printed. E.g. "1200". We will wait this amount of time or until, javascript
- *      calles window.print().
+ *      it is actually printed. E.g. "1200". We will wait this amount of time or until, javascript
+ *      calls window.print().
  * - \b load.zoomFactor How much should we zoom in on the content? E.g. "2.2".
  * - \b load.customHeaders TODO
- * - \b load.repertCustomHeaders Should the custom headers be sendt all elements loaded instead of
+ * - \b load.repertCustomHeaders Should the custom headers be sent all elements loaded instead of
  *       only the main page? Must be either "true" or "false".
  * - \b load.cookies TODO
  * - \b load.post TODO
- * - \b load.blockLocalFileAccess Dissalow local and piped files to acces other local files. Must
+ * - \b load.blockLocalFileAccess Disallow local and piped files to access other local files. Must
  *      be either "true" or "false".
  * - \b load.stopSlowScript Stop slow running javascript. Must be either "true" or "false".
  * - \b load.debugJavascript Forward javascript warnings and errors to the warning callback.
  *      Must be either "true" or "false".
- * - \b load.loadErrorHandling How should we handel obejcts that fail to load. Must be one of:
- *      - "abort" Abort the convertion process
+ * - \b load.loadErrorHandling How should we handle obejcts that fail to load. Must be one of:
+ *      - "abort" Abort the conversion process
  *      - "skip" Do not add the object to the final output
  *      - "ignore" Try to add the object to the final output.
- * - \b load.proxy String describing whact proxy to use when loading the object.
+ * - \b load.proxy String describing what proxy to use when loading the object.
  * - \b load.runScript TODO
  *
  * \section pageHeaderFooter Header and footer settings
@@ -94,15 +91,15 @@
  *      are replaced in this string, see the wkhtmltopdf manual.
  * - \b header.center The text to print in the center part of the header.
  * - \b header.right The text to print in the right part of the header.
- * - \b header.line Should a line be printed under the header? Must be either "true" or "false.
- * - \b header.space The amount of space to put between the header and the content, e.g. "1.8". Be
- *      aware that if this is to large the header will be printed outside the pdf document. This
- *      can be correct with the margin.top setting.
+ * - \b header.line Whether a line should be printed under the header (either "true" or "false").
+ * - \b header.spacing The amount of space to put between the header and the content, e.g. "1.8". Be
+ *      aware that if this is too large the header will be printed outside the pdf document. This
+ *      can be corrected with the margin.top setting.
  * - \b header.htmlUrl Url for a HTML document to use for the header.
  *
  * \section pagePdfGlobal Pdf global settings
  * The \ref wkhtmltopdf_global_settings structure contains the following settings:
- * - \b size.paperSize  The paper size of the output document, e.g. "A4".
+ * - \b size.pageSize  The paper size of the output document, e.g. "A4".
  * - \b size.width The with of the output document, e.g.  "4cm".
  * - \b size.height The height of the output document, e.g. "12in".
  * - \b orientation The orientation of the output document, must be either "Landscape" or "Portrait".
@@ -113,6 +110,7 @@
  * - \b copies How many copies should we print?. e.g. "2".
  * - \b collate Should the copies be collated? Must be either "true" or "false".
  * - \b outline Should a outline (table of content in the sidebar) be generated and put into the PDF? Must be either "true" or false".
+
  * - \b outlineDepth The maximal depth of the outline, e.g. "4".
  * - \b dumpOutline If not set to the empty string a XML representation of the outline is dumped to this file.
  * - \b out The path of the output file, if "-" output is sent to stdout, if empty the output is stored in a buffer.
@@ -122,7 +120,6 @@
  * - \b margin.bottom Size of the bottom margin, e.g. "2cm"
  * - \b margin.left Size of the left margin, e.g. "2cm"
  * - \b margin.right Size of the right margin, e.g. "2cm"
- * - \b outputFormat The format of the output document, must be ether "", "pdf" or "ps".
  * - \b imageDPI The maximal DPI to use for images in the pdf document.
  * - \b imageQuality The jpeg compression factor to use when producing the pdf document, e.g. "92".
  * - \b load.cookieJar Path of file used to load and store cookies.
@@ -212,11 +209,11 @@ QApplication * a = 0;
 int usage = 0;
 
 void MyPdfConverter::warning(const QString & message) {
-	if (warning_cb) (warning_cb)(reinterpret_cast<wkhtmltopdf_converter*>(this), message.toUtf8().constData());
+	if (warning_cb && globalSettings->logLevel > settings::Error) (warning_cb)(reinterpret_cast<wkhtmltopdf_converter*>(this), message.toUtf8().constData());
 }
 
 void MyPdfConverter::error(const QString & message) {
-	if (error_cb) (error_cb)(reinterpret_cast<wkhtmltopdf_converter*>(this), message.toUtf8().constData());
+	if (error_cb && globalSettings->logLevel > settings::None) (error_cb)(reinterpret_cast<wkhtmltopdf_converter*>(this), message.toUtf8().constData());
 }
 
 void MyPdfConverter::phaseChanged() {
@@ -268,16 +265,12 @@ CAPI(int) wkhtmltopdf_extended_qt() {
 
 /**
  * \brief Return the version of wkhtmltopdf
- * Example: 0.10.0_beta4. The string is utf8 encoded and is owned by wkhtmltopdf.
+ * Example: 0.12.1-development. The string is utf8 encoded and is owned by wkhtmltopdf.
  *
  * \return Qt version
  */
 CAPI(const char *) wkhtmltopdf_version() {
-	return STRINGIZE(MAJOR_VERSION)"."STRINGIZE(MINOR_VERSION)"."STRINGIZE(PATCH_VERSION)
-#ifdef BUILD
-		"_"STRINGIZE(BUILD)
-#endif
-		;
+	return STRINGIZE(FULL_VERSION);
 }
 
 /**
@@ -300,11 +293,15 @@ CAPI(int) wkhtmltopdf_init(int use_graphics) {
 		int aa = 1;
 
 		bool ug = true;
-#if defined(Q_WS_X11) || defined(Q_WS_MACX)
+#if defined(Q_OS_UNIX) || defined(Q_OS_MAC)
 #ifdef __EXTENSIVE_WKHTMLTOPDF_QT_HACK__
 		ug = use_graphics;
 		if (!ug) QApplication::setGraphicsSystem("raster");
+#else
+		Q_UNUSED(use_graphics);
 #endif
+#else
+		Q_UNUSED(use_graphics);
 #endif
 		a = new QApplication(aa, arg, ug);
 		MyLooksStyle * style = new MyLooksStyle();
@@ -344,17 +341,27 @@ CAPI(wkhtmltopdf_global_settings *) wkhtmltopdf_create_global_settings() {
 }
 
 /**
+ * \brief Destroy a global settings  object
+ *
+ * Normally one would not need to call this since ownership of the
+ * settings object is transfarred to the converter.
+ */
+CAPI(void) wkhtmltopdf_destroy_global_settings(wkhtmltopdf_global_settings * obj) {
+	delete reinterpret_cast<settings::PdfGlobal *>(obj);
+}
+
+/**
  * \brief Alter a setting in a global settings object
  *
  * \sa \ref pagePdfGlobal, wkhtmltopdf_create_global_settings, wkhtmltopdf_get_global_setting
  *
  * \param settings The settings object to change
  * \param name The name of the setting
- * \param value The new value for the setting
+ * \param value The new value for the setting (encoded in UTF-8)
  * \returns 1 if the setting was updated successfully and 0 otherwise.
  */
 CAPI(int) wkhtmltopdf_set_global_setting(wkhtmltopdf_global_settings * settings, const char * name, const char * value) {
-	return reinterpret_cast<settings::PdfGlobal *>(settings)->set(name, value);
+	return reinterpret_cast<settings::PdfGlobal *>(settings)->set(name, QString::fromUtf8(value));
 }
 
 /**
@@ -364,7 +371,7 @@ CAPI(int) wkhtmltopdf_set_global_setting(wkhtmltopdf_global_settings * settings,
  *
  * \param settings The settings object to inspect
  * \param name The name of the setting to read
- * \param value A buffer of length at least \a vs, where the value is stored.
+ * \param value A buffer of length at least \a vs, where the value (encoded in UTF-8) is stored.
  * \param vs The length of \a value
  * \returns 1 If the the setting exists and was read successfully and 0 otherwise
  */
@@ -390,27 +397,38 @@ CAPI(wkhtmltopdf_object_settings *) wkhtmltopdf_create_object_settings() {
 }
 
 /**
+ * \brief Destroy a global settings  object
+ *
+ * Normally one would not need to call this since ownership of the
+ * settings object is transfarred to the converter.
+ */
+CAPI(void) wkhtmltopdf_destroy_object_settings(wkhtmltopdf_object_settings * obj) {
+	delete reinterpret_cast<settings::PdfObject *>(obj);
+}
+
+
+/**
  * \brief Alter a setting in a object settings object
  *
  * \sa \ref pagesettings, wkhtmltopdf_create_object_settings, wkhtmltopdf_get_object_setting
  *
  * \param settings The settings object to change
  * \param name The name of the setting
- * \param value The new value for the setting
+ * \param value The new value for the setting (encoded in UTF-8)
  * \returns 1 if the setting was updated successfully and 0 otherwise.
  */
 CAPI(int) wkhtmltopdf_set_object_setting(wkhtmltopdf_object_settings * settings, const char * name, const char * value) {
-	return reinterpret_cast<settings::PdfObject *>(settings)->set(name, value);
+	return reinterpret_cast<settings::PdfObject *>(settings)->set(name, QString::fromUtf8(value));
 }
 
 /**
- * \brief Retrieve a setting in a global settings object
+ * \brief Retrieve a setting in a object settings object
  *
  * \sa \ref pagesettings, wkhtmltopdf_create_global_settings, wkhtmltopdf_set_global_setting
  *
  * \param settings The settings object to inspect
  * \param name The name of the setting to read
- * \param value A buffer of length at least \a vs, where the value is stored.
+ * \param value A buffer of length at least \a vs, where the value is stored (encoded in UTF-8).
  * \param vs The length of \a value
  * \returns 1 If the the setting exists and was read successfully and 0 otherwise
  */
@@ -446,17 +464,7 @@ CAPI(wkhtmltopdf_converter *) wkhtmltopdf_create_converter(wkhtmltopdf_global_se
  * \param settings The converter object to destroy
  */
 CAPI(void) wkhtmltopdf_destroy_converter(wkhtmltopdf_converter * converter) {
-	delete reinterpret_cast<MyPdfConverter *>(converter);
-}
-
-/**
- * \brief Set the function that should be called when an errors occurs during conversion
- *
- * \param converter The converter object on which errors we want the callback to be called
- * \param cb The function to call when an error occurs
- */
-CAPI(void) wkhtmltopdf_set_warning_callback(wkhtmltopdf_converter * converter, wkhtmltopdf_str_callback cb) {
-	reinterpret_cast<MyPdfConverter *>(converter)->warning_cb = cb;
+	reinterpret_cast<MyPdfConverter *>(converter)->deleteLater();
 }
 
 /**
@@ -465,6 +473,16 @@ CAPI(void) wkhtmltopdf_set_warning_callback(wkhtmltopdf_converter * converter, w
  * \param converter The converter object on which warnings we want the callback to be called
  * \param cb The function to call when warning message is issued
  *
+ */
+CAPI(void) wkhtmltopdf_set_warning_callback(wkhtmltopdf_converter * converter, wkhtmltopdf_str_callback cb) {
+	reinterpret_cast<MyPdfConverter *>(converter)->warning_cb = cb;
+}
+
+/**
+ * \brief Set the function that should be called when an errors occurs during conversion
+ *
+ * \param converter The converter object on which errors we want the callback to be called
+ * \param cb The function to call when an error occurs
  */
 CAPI(void) wkhtmltopdf_set_error_callback(wkhtmltopdf_converter * converter, wkhtmltopdf_str_callback cb) {
 	reinterpret_cast<MyPdfConverter *>(converter)->error_cb = cb;
@@ -512,7 +530,7 @@ CAPI(void) wkhtmltopdf_set_finished_callback(wkhtmltopdf_converter * converter, 
 }
 
 //CAPI(void) wkhtmltopdf_begin_conversion(wkhtmltopdf_converter * converter) {
-//	reinterpret_cast<MyPdfConverter *>(converter)->converter.beginConvertion();
+//	reinterpret_cast<MyPdfConverter *>(converter)->converter.beginConversion();
 //}
 
 /**
@@ -548,7 +566,7 @@ CAPI(int) wkhtmltopdf_convert(wkhtmltopdf_converter * converter) {
  *
  * \param converter The converter to add the object to
  * \param settings The setting describing the object to add
- * \param data HTML content of the object to convert or NULL
+ * \param data HTML content of the object to convert (encoded in UTF-8) or NULL
  */
 CAPI(void) wkhtmltopdf_add_object(wkhtmltopdf_converter * converter, wkhtmltopdf_object_settings * settings, const char * data) {
 	QString str= QString::fromUtf8(data);
@@ -597,7 +615,14 @@ CAPI(int) wkhtmltopdf_phase_count(wkhtmltopdf_converter * converter) {
  * \sa wkhtmltopdf_current_phase, wkhtmltopdf_phase_description
  */
 CAPI(const char *) wkhtmltopdf_phase_description(wkhtmltopdf_converter * converter, int phase) {
-	return reinterpret_cast<MyPdfConverter *>(converter)->converter.phaseDescription(phase).toUtf8().constData();
+  MyPdfConverter* conv = reinterpret_cast<MyPdfConverter *>(converter);
+	QString pd = conv->converter.phaseDescription(phase);
+	if (!conv->utf8StringCache.contains(pd))
+	{
+		return conv->utf8StringCache.insert(pd, pd.toUtf8()).value().constData();
+	}
+	else
+		return conv->utf8StringCache[pd].constData();
 }
 
 /**
@@ -611,7 +636,12 @@ CAPI(const char *) wkhtmltopdf_phase_description(wkhtmltopdf_converter * convert
  * \sa wkhtmltopdf_set_progress_changed_callback
  */
 CAPI(const char *) wkhtmltopdf_progress_string(wkhtmltopdf_converter * converter) {
-	return reinterpret_cast<MyPdfConverter *>(converter)->converter.progressString().toUtf8().constData();
+  MyPdfConverter* conv = reinterpret_cast<MyPdfConverter *>(converter);
+	QString ps = conv->converter.progressString();
+	if (!conv->utf8StringCache.contains(ps))
+		return conv->utf8StringCache.insert(ps, ps.toUtf8()).value().constData();
+	else
+		return conv->utf8StringCache[ps].constData();
 }
 
 /**
@@ -647,12 +677,13 @@ CAPI(long) wkhtmltopdf_get_output(wkhtmltopdf_converter * converter, const unsig
 //  LocalWords:  eval progn stroustrup innamespace sts sw noet wkhtmltopdf DLL
 //  LocalWords:  ifdef WKHTMLTOX UNDEF undef endif pdf dllbegin namespace const
 //  LocalWords:  QString cb bool ok globalSettings phaseChanged progressChanged
-//  LocalWords:  objectSettings utf CropSettins HeaderFooter ImageGlobal dpi sa
-//  LocalWords:  PdfGlobal PdfObject TabelOfContent pagePdfGlobal pagePdfObject
-//  LocalWords:  pageImageGlobal pageGlobalLoad paperSize colorMode Grayscale
+//  LocalWords:  objectSettings utf CropSettings HeaderFooter ImageGlobal dpi sa
+//  LocalWords:  PdfGlobal PdfObject TableOfContent pagePdfGlobal pagePdfObject
+//  LocalWords:  pageImageGlobal pageGlobalLoad pageSize colorMode Grayscale
 //  LocalWords:  pageOffset outlineDepth dumpOutline stdout pageLoad pageWeb aa
 //  LocalWords:  includeInOutline pagesCount tocXsl xsl struct typedef str CAPI
 //  LocalWords:  param STRINGIZEE STRINGIZE deinit qApp strcpy wkhtmltox arg ug
 //  LocalWords:  WS MACX MyLooksStyle setStyle isNull qstrncpy MyPdfConverter
-//  LocalWords:  beginConvertion paragm addResource currentPhase phaseCount
-//  LocalWords:  urrent http httpErrorCode QByteArray constData
+//  LocalWords:  beginConversion beginConvertion paragm addResource
+//  LocalWords:  currentPhase phaseCount urrent http httpErrorCode QByteArray
+//  LocalWords:  constData

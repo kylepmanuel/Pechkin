@@ -25,14 +25,14 @@
  * - \b crop.left left/x coordinate of the window to capture in pixels. E.g. "200"
  * - \b crop.top top/y coordinate of the window to capture in pixels. E.g. "200"
  * - \b crop.width Width of the window to capture in pixels. E.g. "200"
- * - \b crop.height Heigt of the window to capture in pixels. E.g. "200"
+ * - \b crop.height Height of the window to capture in pixels. E.g. "200"
  * - \b load.cookieJar Path of file used to load and store cookies.
  * - \b load.* Page specific settings related to loading content, see \ref pageLoad.
  * - \b web.* See \ref pageWeb.
  * - \b transparent When outputting a PNG or SVG, make the white background transparent.
  *      Must be either "true" or "false"
  * - \b in The URL or path of the input file, if "-" stdin is used. E.g. "http://google.com"
- * - \b out The path of the output file, if "-" stdout is used, if empty the content is storred
+ * - \b out The path of the output file, if "-" stdout is used, if empty the content is stored
  *      to a internalBuffer.
  * - \b fmt The output format to use, must be either "", "jpg", "png", "bmp" or "svg".
  * - \b screenWidth The with of the screen used to render is pixels, e.g "800".
@@ -41,11 +41,6 @@
  * - \b quality The compression factor to use when outputting a JPEG image. E.g. "94".
  */
 
-#ifdef __WKHTMLTOX_UNDEF_QT_DLL__
-#ifdef QT_DLL
-#undef QT_DLL
-#endif
-#endif
 
 #include "image_c_bindings_p.hh"
 #include "pdf.h"
@@ -54,11 +49,11 @@
 using namespace wkhtmltopdf;
 
 void MyImageConverter::warning(const QString & message) {
-	if (warning_cb) (warning_cb)(reinterpret_cast<wkhtmltoimage_converter*>(this), message.toUtf8().constData());
+	if (warning_cb && globalSettings->logLevel > settings::Error) (warning_cb)(reinterpret_cast<wkhtmltoimage_converter*>(this), message.toUtf8().constData());
 }
 
 void MyImageConverter::error(const QString & message) {
-	if (error_cb) (error_cb)(reinterpret_cast<wkhtmltoimage_converter*>(this), message.toUtf8().constData());
+	if (error_cb && globalSettings->logLevel > settings::None) (error_cb)(reinterpret_cast<wkhtmltoimage_converter*>(this), message.toUtf8().constData());
 }
 
 void MyImageConverter::phaseChanged() {
@@ -108,8 +103,12 @@ CAPI(wkhtmltoimage_global_settings *) wkhtmltoimage_create_global_settings() {
 	return reinterpret_cast<wkhtmltoimage_global_settings *>(new settings::ImageGlobal());
 }
 
+CAPI(void) wkhtmltoimage_destroy_global_settings(wkhtmltoimage_global_settings * obj) {
+    delete reinterpret_cast<settings::ImageGlobal *>(obj);
+}
+
 CAPI(int) wkhtmltoimage_set_global_setting(wkhtmltoimage_global_settings * settings, const char * name, const char * value) {
-	return reinterpret_cast<settings::ImageGlobal *>(settings)->set(name, value);
+	return reinterpret_cast<settings::ImageGlobal *>(settings)->set(name, QString::fromUtf8(value));
 }
 
 CAPI(int) wkhtmltoimage_get_global_setting(wkhtmltoimage_global_settings * settings, const char * name, char * value, int vs) {
@@ -149,8 +148,8 @@ CAPI(void) wkhtmltoimage_set_finished_callback(wkhtmltoimage_converter * convert
 	reinterpret_cast<MyImageConverter *>(converter)->finished_cb = cb;
 }
 
-/*CAPI(void) wkhtmltoimage_begin_convertion(wkhtmltoimage_converter * converter) {
-	reinterpret_cast<MyImageConverter *>(converter)->converter.beginConvertion();
+/*CAPI(void) wkhtmltoimage_begin_conversion(wkhtmltoimage_converter * converter) {
+	reinterpret_cast<MyImageConverter *>(converter)->converter.beginConversion();
 	}*/
 
 CAPI(int) wkhtmltoimage_convert(wkhtmltoimage_converter * converter) {

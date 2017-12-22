@@ -18,11 +18,6 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with wkhtmltopdf.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifdef __WKHTMLTOX_UNDEF_QT_DLL__
-#ifdef QT_DLL
-#undef QT_DLL
-#endif
-#endif
 
 #include "imageconverter_p.hh"
 #include "imagesettings.hh"
@@ -40,11 +35,17 @@
 #include <QWebFrame>
 #include <QWebPage>
 #include <qapplication.h>
+
+#ifdef Q_OS_WIN32
+#include <fcntl.h>
+#include <io.h>
+#endif
+
 namespace wkhtmltopdf {
 
 ImageConverterPrivate::ImageConverterPrivate(ImageConverter & o, wkhtmltopdf::settings::ImageGlobal & s, const QString * data):
 	settings(s),
-	loader(s.loadGlobal),
+	loader(s.loadGlobal, 96, true),
 	out(o) {
 	out.emitCheckboxSvgs(s.loadPage);
 	if (data) inputData = *data;
@@ -61,7 +62,7 @@ ImageConverterPrivate::ImageConverterPrivate(ImageConverter & o, wkhtmltopdf::se
 
 void ImageConverterPrivate::beginConvert() {
 	error = false;
-	convertionDone = false;
+	conversionDone = false;
 	errorCode = 0;
 	progressString = "0%";
 	loaderObject = loader.addResource(settings.in, settings.loadPage, &inputData);
@@ -98,7 +99,7 @@ void ImageConverterPrivate::pagesLoaded(bool ok) {
 //	test.setFormat(settings.fmt);
 //	if (!test.canWrite()) {
 //		if (!settings.quiet)printf("error: file format not supported\n");
-//		httpErrorCode=EFAULT;
+//		httpErrorCode=DEFAULT;
 //		return false;
 //	}
 	// create webkit frame and load website
@@ -153,8 +154,12 @@ void ImageConverterPrivate::pagesLoaded(bool ok) {
 	else if (settings.out != "-" ) {
 		file.setFileName(settings.out);
 		openOk = file.open(QIODevice::WriteOnly);
-	} else
+	} else {
+#ifdef Q_OS_WIN32
+		_setmode(_fileno(stdout), _O_BINARY);
+#endif
 		openOk = file.open(stdout, QIODevice::WriteOnly);
+    }
 
 	if (!openOk) {
 		emit out.error("Could not write to output file");
@@ -190,7 +195,7 @@ void ImageConverterPrivate::pagesLoaded(bool ok) {
 		e.setStyleProperty("background-color", "transparent");
 		e.setStyleProperty("background-image", "none");
 		QPalette pal = loaderObject->page.palette();
-		pal.setColor(QPalette::Base, QColor(Qt::transparent));
+		pal.setBrush(QPalette::Base, Qt::transparent);
 		loaderObject->page.setPalette(pal);
 	} else {
 		painter.fillRect(QRect(QPoint(0,0),loaderObject->page.viewportSize()), Qt::white);
@@ -221,7 +226,7 @@ void ImageConverterPrivate::pagesLoaded(bool ok) {
 
 	currentPhase = 2;
 	emit out.phaseChanged();
-	convertionDone = true;
+	conversionDone = true;
 	emit out.finished(true);
 
 	qApp->exit(0); // quit qt's event handling

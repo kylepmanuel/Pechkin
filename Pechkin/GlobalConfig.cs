@@ -69,7 +69,7 @@ namespace Pechkin
                 return SetPaperSize(ps.Width, ps.Height);
             }
 
-            LogManager.GetCurrentClassLogger().Warn("T:" + Thread.CurrentThread.Name + " Unknown PaperKind specified in SetPaperSize (" + ((int)kind) + ")");
+            LogManager.GetLogger<GlobalConfig>().Warn("T:" + Thread.CurrentThread.Name + " Unknown PaperKind specified in SetPaperSize (" + ((int)kind) + ")");
 
             return this;
         }
@@ -324,7 +324,7 @@ namespace Pechkin
 
         internal void SetUpGlobalConfig(IntPtr config)
         {
-            ILog log = LogManager.GetCurrentClassLogger();
+            ILog log = LogManager.GetLogger<GlobalConfig>();
             if (log.IsTraceEnabled)
             {
                 log.Trace("T:" + Thread.CurrentThread.Name + " Setting up global config (many wkhtmltopdf_set_global_setting)");

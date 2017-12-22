@@ -88,7 +88,7 @@ void PdfCommandLineParser::usage(FILE * fd, bool extended) const {
 /*!
   Output the readme/manual
   \param fd The file to output to
-  \param html Do we want the html manaul, or the README
+  \param html Do we want the html manual, or the README
 */
 void PdfCommandLineParser::readme(FILE * fd, bool html) const {
 	Outputter * o = html?Outputter::html(fd):Outputter::text(fd, true);
@@ -107,9 +107,8 @@ void PdfCommandLineParser::readme(FILE * fd, bool html) const {
 	outputPageSizes(o);
 	outputArgsFromStdin(o);
 	outputStaticProblems(o);
-	outputCompilation(o);
 	outputInstallation(o);
-	outputExampels(o);
+	outputExamples(o);
 	delete o;
 }
 
@@ -122,7 +121,7 @@ void PdfCommandLineParser::readme(FILE * fd, bool html) const {
 	//foreach(ArgHandler * h, longToHandler)
 	//	h->useDefault(*d);
 
-	//Load configuration from enviornment
+	//Load configuration from environment
 	//char * val;
 	//const char * vars[] = {"proxy","all_proxy","http_proxy", NULL};
 	//for(int i=0; vars[i]; ++i) {
@@ -167,7 +166,12 @@ void PdfCommandLineParser::parseArguments(int argc, const char ** argv, bool fro
 				usage(stderr, false);
 				exit(1);
 			}
-			ps.page = QString::fromLocal8Bit(argv[arg]);
+			ps.page = QString::fromLocal8Bit(argv[arg++]);
+			// parse page options and then override the header/footer settings
+			for (;arg < argc;++arg) {
+				if (argv[arg][0] != '-' || argv[arg][1] == '\0' || defaultMode) break;
+				parseArg(sections, argc, argv, defaultMode, arg, (char*)&ps);
+			}
 
 			ps.header.left = ps.header.right = ps.header.center = "";
 			ps.footer.left = ps.footer.right = ps.footer.center = "";
@@ -175,8 +179,7 @@ void PdfCommandLineParser::parseArguments(int argc, const char ** argv, bool fro
 			ps.header.htmlUrl = ps.footer.htmlUrl = "";
 			ps.includeInOutline = false;
 
-			//Setup varius cover settings her
-			++arg;
+			continue;
 		} else if (!strcmp(argv[arg],"toc")) {
 			++arg;
 			sections = page | toc;
@@ -201,9 +204,9 @@ void PdfCommandLineParser::parseArguments(int argc, const char ** argv, bool fro
 	}
 
 	if (pageSettings.size() == 0 || argc < 2) {
-		fprintf(stderr, "You need to specify atleast one input file, and exactly one output file\nUse - for stdin or stdout\n\n");
+		fprintf(stderr, "You need to specify at least one input file, and exactly one output file\nUse - for stdin or stdout\n\n");
 		usage(stderr, false);
 		exit(1);
 	}
-	globalSettings.out = argv[argc-1];
+	globalSettings.out = QString::fromLocal8Bit(argv[argc-1]);
 }

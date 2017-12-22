@@ -15,7 +15,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with wkhtmltopdf.  If not, see <http:#www.gnu.org/licenses/>.
 
-include(../../version.pri)
 include(../../common.pri)
 
 TEMPLATE = app
@@ -24,29 +23,16 @@ DESTDIR = ../../bin
 DEPENDPATH += . ../shared
 INCLUDEPATH += . ../shared
 
-readme.target=../../README_WKHTMLTOIMAGE
-readme.commands=LD_LIBRARY_PATH=../../bin/ ../../bin/wkhtmltoimage --readme > ../../README_WKHTMLTOIMAGE
-readme.depends=../../bin/wkhtmltoimage
-
-QMAKE_EXTRA_TARGETS += readme
-
 unix {
-    man.target=../../wkhtmltoimage.1.gz
-    man.commands=LD_LIBRARY_PATH=../../bin/ ../../bin/wkhtmltoimage --manpage | gzip > $@
-    man.depends=../../bin/wkhtmltoimage
+    man.path=$$INSTALLBASE/share/man/man1
+    man.extra=LD_LIBRARY_PATH=../../bin/ ../../bin/wkhtmltoimage --manpage | gzip > $(INSTALL_ROOT)$$INSTALLBASE/share/man/man1/wkhtmltoimage.1.gz
 
-    manins.target=manins
-    manins.depends=man
-    manins.files=../../wkhtmltoimage.1.gz
-    manins.path=$$INSTALLBASE/share/man/man1
-
-    QMAKE_EXTRA_TARGETS += manins man
-    INSTALLS += manins
+    QMAKE_EXTRA_TARGETS += man
+    INSTALLS += man
 }
 
 macx {
     CONFIG -= app_bundle
-    CONFIG += x86
 }
 
 INSTALLS += target
@@ -54,7 +40,7 @@ target.path=$$INSTALLBASE/bin
 
 include(../shared/shared.pri)
 
-contains(DEFINES, QT_SHARED) {
+CONFIG(shared, shared|static) {
   LIBS += -L../../bin -lwkhtmltox
 } else {
   include(../lib/lib.pri)

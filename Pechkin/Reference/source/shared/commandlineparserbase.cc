@@ -72,21 +72,40 @@ void CommandLineParserBase::outputSwitches(Outputter * o, bool extended, bool do
  	}
 }
 
+#define STRINGIZE_(x) #x
+#define STRINGIZE(x) STRINGIZE_(x)
+
+const char *CommandLineParserBase::appVersion() const {
+#ifdef __EXTENSIVE_WKHTMLTOPDF_QT_HACK__
+	return STRINGIZE(FULL_VERSION) " (with patched qt)";
+#else
+	return STRINGIZE(FULL_VERSION);
+#endif
+}
+
 /*!
   Output version information aka. --version
   \param fd The file to output to
 */
 void CommandLineParserBase::version(FILE * fd) const {
+	fprintf(fd, "%s %s\n", appName().toLocal8Bit().constData(), appVersion());
+}
+
+/*!
+  Output license information aka. --license
+  \param fd The file to output to
+*/
+void CommandLineParserBase::license(FILE * fd) const {
  	Outputter * o = Outputter::text(fd,false);
   	outputName(o);
-  	outputLicense(o);
   	outputAuthors(o);
+  	outputLicense(o);
 	delete o;
 }
 
 void CommandLineParserBase::parseArg(int sections, const int argc, const char ** argv, bool & defaultMode, int & arg, char * page) {
 	if (argv[arg][1] == '-') { //We have a long style argument
-		//After an -- apperas in the argument list all that follows is interpited as default arguments
+		//After an -- apperas in the argument list all that follows is interpreted as default arguments
 		if (argv[arg][2] == '0') {
 			defaultMode=true;
 			return;
@@ -118,7 +137,7 @@ void CommandLineParserBase::parseArg(int sections, const int argc, const char **
 		if (j.value()->qthack)
 			fprintf(stderr, "The switch %s, is not support using unpatched qt, and will be ignored.", argv[arg]);
 #endif
-		//Skip allredy handled switch arguments
+		//Skip already handled switch arguments
 		arg += j.value()->argn.size();
 	} else {
 		int c=arg;//Remember the current argument we are parsing
@@ -151,7 +170,7 @@ void CommandLineParserBase::parseArg(int sections, const int argc, const char **
  			if (k.value()->qthack)
  				fprintf(stderr, "The switch -%c, is not support using unpatched qt, and will be ignored.", argv[c][j]);
 #endif
-			//Skip allredy handled switch arguments
+			//Skip already handled switch arguments
 			arg += k.value()->argn.size();
 		}
 	}

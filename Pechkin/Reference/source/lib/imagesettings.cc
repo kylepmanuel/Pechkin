@@ -18,11 +18,6 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with wkhtmltopdf.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifdef __WKHTMLTOX_UNDEF_QT_DLL__
-#ifdef QT_DLL
-#undef QT_DLL
-#endif
-#endif
 
 #include "imagesettings.hh"
 #include "reflect.hh"
@@ -46,7 +41,8 @@ struct DLL_LOCAL ReflectImpl<ImageGlobal>: public ReflectClass {
 	ReflectImpl(ImageGlobal & c) {
 		WKHTMLTOPDF_REFLECT(screenWidth);
 		WKHTMLTOPDF_REFLECT(screenHeight);
-		WKHTMLTOPDF_REFLECT(quiet);
+		ReflectClass::add("quiet", new QuietArgBackwardsCompatReflect(c.logLevel));	// Fake the "quiet" argument
+		WKHTMLTOPDF_REFLECT(logLevel);
 		WKHTMLTOPDF_REFLECT(transparent);
 		WKHTMLTOPDF_REFLECT(useGraphics);
 		WKHTMLTOPDF_REFLECT(in);
@@ -65,14 +61,14 @@ CropSettings::CropSettings():
 	height(-1) {}
 
 ImageGlobal::ImageGlobal():
-	screenWidth(1024),
-	screenHeight(0),
-	quiet(false),
+	logLevel(Info),
 	transparent(false),
 	useGraphics(false),
 	in(""),
 	out(""),
 	fmt(""),
+	screenWidth(1024),
+	screenHeight(0),
 	quality(94),
 	smartWidth(true) {}
 

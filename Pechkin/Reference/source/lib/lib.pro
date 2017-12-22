@@ -18,23 +18,24 @@
 TEMPLATE = lib
 CONFIG += dll
 
-include(../../version.pri)
 include(../../common.pri)
 include(lib.pri)
 
 DEF_FILE = lib.def
-DEFINES += __WKHTMLTOX_UNDEF_QT_DLL__
+CONFIG(static, shared|static): DEFINES += QT_NODLL
 
 unix {
-   headers.targit=headers
-   headers.files=../../include/wkhtmltox/*
+   headers.target=headers
+   headers.files=../../include/wkhtmltox/*.h ../../include/wkhtmltox/*.inc
    headers.path=$$INSTALLBASE/include/wkhtmltox
 
    QMAKE_EXTRA_TARGETS += headers
    INSTALLS += headers
 }
 
-VERSION=$${MAJOR_VERSION}.$${MINOR_VERSION}.$${PATCH_VERSION}
+windows {
+   TARGET_EXT=.dll
+}
 
 TARGET=wkhtmltox
 INSTALLS += target

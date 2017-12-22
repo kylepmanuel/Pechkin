@@ -18,11 +18,6 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with wkhtmltopdf.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifdef __WKHTMLTOX_UNDEF_QT_DLL__
-#ifdef QT_DLL
-#undef QT_DLL
-#endif
-#endif
 
 #include "reflect.hh"
 
@@ -38,15 +33,15 @@ bool ReflectSimple::set(const char * name, const QString & value) {
 QString ReflectClass::get(const char * name) {
 	int i=0;
 	while (name[i] !=0 && name[i] != '.' && name[i] != '[') ++i;
-	if (!elms.contains(QString::fromAscii(name, i))) return QString();
-	return elms[QString::fromAscii(name,i)]->get(name + (name[i] == '.'?i+1:i));
+	if (!elms.contains(QString::fromLocal8Bit(name, i))) return QString();
+	return elms[QString::fromLocal8Bit(name,i)]->get(name + (name[i] == '.'?i+1:i));
 }
 
 bool ReflectClass::set(const char * name, const QString & value) {
 	int i=0;
 	while (name[i] !=0 && name[i] != '.' && name[i] != '[') ++i;
-	if (!elms.contains(QString::fromAscii(name, i))) return false;
-	return elms[QString::fromAscii(name,i)]->set(name + (name[i] == '.'?i+1:i), value);
+	if (!elms.contains(QString::fromLocal8Bit(name, i))) return false;
+	return elms[QString::fromLocal8Bit(name,i)]->set(name + (name[i] == '.'?i+1:i), value);
 }
 
 
@@ -62,6 +57,9 @@ ReflectImpl<LoadGlobal>::ReflectImpl(LoadGlobal & c) {
 ReflectImpl<LoadPage>::ReflectImpl(LoadPage & c) {
 	WKHTMLTOPDF_REFLECT(username);
 	WKHTMLTOPDF_REFLECT(password);
+	WKHTMLTOPDF_REFLECT(clientSslKeyPath);
+	WKHTMLTOPDF_REFLECT(clientSslKeyPassword);
+	WKHTMLTOPDF_REFLECT(clientSslCrtPath);
 	WKHTMLTOPDF_REFLECT(jsdelay);
 	WKHTMLTOPDF_REFLECT(windowStatus);
 	WKHTMLTOPDF_REFLECT(zoomFactor);
@@ -80,6 +78,9 @@ ReflectImpl<LoadPage>::ReflectImpl(LoadPage & c) {
 	WKHTMLTOPDF_REFLECT(checkboxCheckedSvg);
 	WKHTMLTOPDF_REFLECT(radiobuttonSvg);
 	WKHTMLTOPDF_REFLECT(radiobuttonCheckedSvg);
+	WKHTMLTOPDF_REFLECT(cacheDir);
+	WKHTMLTOPDF_REFLECT(bypassProxyForHosts);
+	WKHTMLTOPDF_REFLECT(proxyHostNameLookup);
 }
 
 ReflectImpl<Web>::ReflectImpl(Web & c) {

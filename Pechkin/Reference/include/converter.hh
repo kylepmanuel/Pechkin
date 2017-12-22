@@ -17,11 +17,6 @@
 
 #ifndef __CONVERTER_HH__
 #define __CONVERTER_HH__
-#ifdef __WKHTMLTOX_UNDEF_QT_DLL__
-#ifdef QT_DLL
-#undef QT_DLL
-#endif
-#endif
 
 #include <QObject>
 #include <wkhtmltox/loadsettings.hh>
@@ -37,7 +32,7 @@ public:
 	virtual ~Converter() {};
 
     int currentPhase();
-	int phaseCount();
+    int phaseCount();
     QString phaseDescription(int phase=-1);
     QString progressString();
     int httpErrorCode();
@@ -53,7 +48,7 @@ signals:
 	void radiobuttonSvgChanged(const QString & path);
 	void radiobuttonCheckedSvgChanged(const QString & path);
 public slots:
-    void beginConvertion();
+    void beginConversion();
 	bool convert();
 	void cancel();
 protected:

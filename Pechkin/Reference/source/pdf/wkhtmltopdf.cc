@@ -20,7 +20,6 @@
 
 #include "pdfcommandlineparser.hh"
 #include "progressfeedback.hh"
-#include <QCleanlooksStyle>
 #include <QCommonStyle>
 #include <QPainter>
 #include <QStyleOption>
@@ -35,6 +34,10 @@
 #include <wkhtmltox/pdfsettings.hh>
 #include <wkhtmltox/utilities.hh>
 
+#if defined(Q_OS_UNIX)
+#include <locale.h>
+#endif
+
 using namespace wkhtmltopdf::settings;
 using namespace wkhtmltopdf;
 
@@ -43,10 +46,14 @@ using namespace wkhtmltopdf;
  * reading commandline options from stdin
  * \param buff the line to parse
  * \param nargc on return will hold the number of arguments read
- * \param nargv on return will hold the argumenst read and be NULL terminated
+ * \param nargv on return will hold the arguments read and be NULL terminated
  */
 enum State {skip, tok, q1, q2, q1_esc, q2_esc, tok_esc};
-void parseString(char * buff, int &nargc, char **nargv) {
+void parseString(char * buff, int &nargc, char ***nargv) {
+	int nargv_size = 1024;
+	*nargv = (char**)malloc(sizeof(char*) * nargv_size);
+	if (!*nargv) exit(1);
+
 	State state = skip;
 	int write_start=0;
 	int write=0;
@@ -69,8 +76,13 @@ void parseString(char * buff, int &nargc, char **nargv) {
 				next_state=skip;
 				if (write_start != write) {
 					buff[write++]='\0';
-					nargv[nargc++] = buff+write_start;
-					if (nargc > 998) exit(1);
+					if (nargc+1 >= nargv_size)
+					{
+						nargv_size *= 2;
+						*nargv = (char**)realloc(*nargv, sizeof(char*) * nargv_size);
+						if (!*nargv) exit(1);
+					}
+					(*nargv)[nargc++] = buff+write_start;
 				}
 				write_start = write;
 			} else buff[write++] = buff[read];
@@ -88,7 +100,7 @@ void parseString(char * buff, int &nargc, char **nargv) {
 			else buff[write++] = buff[read];
 			break;
 		case tok_esc:
-			//Escape one char and return to the tokan parsing state
+			//Escape one char and return to the token parsing state
 			next_state=tok;
 			buff[write++] = buff[read];
 			break;
@@ -105,15 +117,55 @@ void parseString(char * buff, int &nargc, char **nargv) {
 		}
 		state=next_state;
 	}
+	if (nargc+1 + 2 >= nargv_size)
+	{
+		nargv_size *= 2;
+		*nargv = (char**)realloc(*nargv, sizeof(char*) * nargv_size);
+		if (!*nargv) exit(1);
+	}
 	//Remember the last parameter
 	if (write_start != write) {
 		buff[write++]='\0';
-		nargv[nargc++] = buff+write_start;
+		(*nargv)[nargc++] = buff+write_start;
 	}
-	nargv[nargc]=NULL;
+	(*nargv)[nargc]=NULL;
+}
+
+/*
+ * Returns a line from a FILE stream. Caller must free buffer.
+ * Derived from getline function from DHCPD client daemon.
+ * Needed because of Windows and systems before POSIX 2008.
+ */
+char * fgets_large(FILE * fp)
+{
+	const size_t bufsize_grow = 1024;
+	size_t bytes = 0, buflen = 0;
+	char *p, *buf = NULL;
+
+	do {
+		if (feof(fp))
+			break;
+		if (buf == NULL || bytes != 0) {
+			buflen += bufsize_grow;
+			buf = (char *)realloc(buf, buflen);
+			if (buf == NULL)
+				return NULL;
+		}
+		p = buf + bytes;
+		memset(p, 0, bufsize_grow);
+		if (fgets(p, bufsize_grow, fp) == NULL)
+			break;
+		bytes += strlen(p);
+	} while (bytes == 0 || *(buf + (bytes - 1)) != '\n');
+	if (bytes == 0)
+		return NULL;
+	return buf;
 }
 
 int main(int argc, char * argv[]) {
+#if defined(Q_OS_UNIX)
+	setlocale(LC_ALL, "");
+#endif
 	//This will store all our settings
 	PdfGlobal globalSettings;
 	QList<PdfObject> objectSettings;
@@ -128,7 +180,7 @@ int main(int argc, char * argv[]) {
 
 	//Construct QApplication required for printing
 	bool use_graphics=true;
-#if defined(Q_WS_X11) || defined(Q_WS_MACX)
+#if defined(Q_OS_UNIX) || defined(Q_OS_MAC)
 #ifdef __EXTENSIVE_WKHTMLTOPDF_QT_HACK__
 	use_graphics=globalSettings.useGraphics;
 	if (!use_graphics) QApplication::setGraphicsSystem("raster");
@@ -139,13 +191,12 @@ int main(int argc, char * argv[]) {
 	a.setStyle(style);
 
 	if (parser.readArgsFromStdin) {
-		char buff[20400];
-		char *nargv[1000];
-		nargv[0] = argv[0];
-		for (int i=0; i < argc; ++i) nargv[i] = argv[i];
-		while (fgets(buff,20398,stdin)) {
+		char *buff;
+		while ((buff = fgets_large(stdin)) != NULL) {
 			int nargc=argc;
-			parseString(buff,nargc,nargv);
+			char **nargv;
+			parseString(buff,nargc,&nargv);
+			for (int i=0; i < argc; ++i) nargv[i] = argv[i];
 
 			PdfGlobal globalSettings;
 			QList<PdfObject> objectSettings;
@@ -157,12 +208,14 @@ int main(int argc, char * argv[]) {
 			parser.parseArguments(nargc, (const char**)nargv, true);
 
 			PdfConverter converter(globalSettings);
-			ProgressFeedback feedback(globalSettings.quiet, converter);
+			ProgressFeedback feedback(globalSettings.logLevel, converter);
 			foreach (const PdfObject & object, objectSettings)
 				converter.addResource(object);
 
 			if (!converter.convert())
 				exit(EXIT_FAILURE);
+			free(buff);
+			free(nargv);
 		}
 		exit(EXIT_SUCCESS);
 	}
@@ -174,7 +227,7 @@ int main(int argc, char * argv[]) {
 	QObject::connect(&converter, SIGNAL(radiobuttonSvgChanged(const QString &)), style, SLOT(setRadioButtonSvg(const QString &)));
 	QObject::connect(&converter, SIGNAL(radiobuttonCheckedSvgChanged(const QString &)), style, SLOT(setRadioButtonCheckedSvg(const QString &)));
 
-	ProgressFeedback feedback(globalSettings.quiet, converter);
+	ProgressFeedback feedback(globalSettings.logLevel, converter);
 	foreach (const PdfObject & object, objectSettings)
 		converter.addResource(object);
 

@@ -1,6 +1,8 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27004.2002
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pechkin", "Pechkin\Pechkin.csproj", "{023DF833-B252-48B3-B6AF-DBBB13E39B13}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PechkinTestApp", "PechkinTestApp\PechkinTestApp.csproj", "{35E72E2C-DE58-4ED7-9B47-5EF13860AF42}"
@@ -47,5 +49,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {EFCF19C7-CF37-4660-8839-3B6693047712}
 	EndGlobalSection
 EndGlobal

@@ -18,48 +18,45 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with wkhtmltopdf.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef __WEBSETTINGS_HH__
-#define __WEBSETTINGS_HH__
-
-#include <QNetworkProxy>
+#include "logging.hh"
+#include <QMap>
 #include <QString>
-
 #include <wkhtmltox/dllbegin.inc>
 namespace wkhtmltopdf {
 namespace settings {
 
-struct DLL_PUBLIC Web {
-	Web();
+// Centralized name-to-enum value mapping
+QMap<QString, LogLevel> logLevelMap() {
+	QMap<QString, LogLevel> res;
+	res["none"] = None;
+	res["error"] = Error;
+	res["warn"] = Warn;
+	res["info"] = Info;
+	return res;
+}
 
-	//! Should we print background images
-	bool background;
+QMap<QString, LogLevel> logLevels = logLevelMap();
 
-	//! Should we load images
-	bool loadImages;
+LogLevel strToLogLevel(const char * s, bool * ok) {
+	for (QMap<QString, LogLevel>::const_iterator i = logLevels.begin(); i != logLevels.end(); ++i) {
+		if (i.key().compare(s, Qt::CaseInsensitive) != 0) continue;
+		if (ok) *ok = true;
+		return i.value();
+	}
+	if (ok) *ok = false;
+	return Info;
+}
 
-	//! Should we enable Javascript
-	bool enableJavascript;
-
-	//! Should the horrible intelligent shrinking feature be enabled?
-	bool enableIntelligentShrinking;
-
-	//! Minimum font size
-	int minimumFontSize;
-
-	//! Should we use the print or the screen media type
-	bool printMediaType;
-
-	//! Encoding used to enterpit a document with do supplied encoding
-	QString defaultEncoding;
-
-	//! Stylesheet supplied by the user
-	QString userStyleSheet;
-
-	//! Should plugins be allowed
-	bool enablePlugins;
-};
+QString logLevelToStr(const LogLevel & l, bool * ok) {
+	for (QMap<QString, LogLevel>::const_iterator i = logLevels.begin(); i != logLevels.end(); ++i) {
+		if (i.value() != l) continue;
+		if (ok) *ok = true;
+		return i.key();
+	}
+	if (ok) *ok = false;
+	return QString();
+}
 
 }
 }
 #include <wkhtmltox/dllend.inc>
-#endif //__WEBSETTINGS_HH__

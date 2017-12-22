@@ -20,11 +20,6 @@
 
 #ifndef __CONVERTER_P_HH__
 #define __CONVERTER_P_HH__
-#ifdef __WKHTMLTOX_UNDEF_QT_DLL__
-#ifdef QT_DLL
-#undef QT_DLL
-#endif
-#endif
 
 #include "converter.hh"
 #include "websettings.hh"
@@ -50,7 +45,7 @@ protected:
 	virtual Converter & outer() = 0;
 	int errorCode;
 
-	bool convertionDone;
+	bool conversionDone;
 
 	void updateWebSettings(QWebSettings * ws, const settings::Web & s) const;
 public slots:

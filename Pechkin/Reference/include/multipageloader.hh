@@ -17,16 +17,15 @@
 
 #ifndef __MULTIPAGELOADER_HH__
 #define __MULTIPAGELOADER_HH__
-#ifdef __WKHTMLTOX_UNDEF_QT_DLL__
-#ifdef QT_DLL
-#undef QT_DLL
-#endif
-#endif
 
 #include <QFile>
 #include <QObject>
 #include <QUrl>
+#if QT_VERSION >= 0x050000
+#include <QtWebKitWidgets>
+#else
 #include <QWebPage>
+#endif
 #include <wkhtmltox/loadsettings.hh>
 
 #include <wkhtmltox/dllbegin.inc>
@@ -46,7 +45,7 @@ class DLL_LOCAL MultiPageLoaderPrivate;
 class DLL_LOCAL MultiPageLoader: public QObject {
 	Q_OBJECT
 public:
-	MultiPageLoader(settings::LoadGlobal & s);
+	MultiPageLoader(settings::LoadGlobal & s, int dpi, bool mainLoader = false);
 	~MultiPageLoader();
 	LoaderObject * addResource(const QString & url, const settings::LoadPage & settings, const QString * data=NULL);
 	LoaderObject * addResource(const QUrl & url, const settings::LoadPage & settings);

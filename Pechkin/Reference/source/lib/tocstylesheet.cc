@@ -18,23 +18,18 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with wkhtmltopdf.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifdef __WKHTMLTOX_UNDEF_QT_DLL__
-#ifdef QT_DLL
-#undef QT_DLL
-#endif
-#endif
 
 #include "outline_p.hh"
 #include "pdfsettings.hh"
-#include <QTextOStream>
+#include <QTextStream>
 
 namespace wkhtmltopdf {
 
 void dumpDefaultTOCStyleSheet(QTextStream & stream, settings::TableOfContent & s) {
     stream << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" << endl
-		   << "<xsl:stylesheet version=\"1.0\"" << endl
+		   << "<xsl:stylesheet version=\"2.0\"" << endl
 		   << "                xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\"" << endl
-		   << "                xmlns:outline=\"http://code.google.com/p/wkhtmltopdf/outline\"" << endl
+		   << "                xmlns:outline=\"http://wkhtmltopdf.org/outline\"" << endl
 		   << "                xmlns=\"http://www.w3.org/1999/xhtml\">" << endl
 		   << "  <xsl:output doctype-public=\"-//W3C//DTD XHTML 1.0 Strict//EN\"" << endl
 	       << "              doctype-system=\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\"" << endl
@@ -43,6 +38,7 @@ void dumpDefaultTOCStyleSheet(QTextStream & stream, settings::TableOfContent & s
 		   << "    <html>" << endl
 		   << "      <head>" << endl
 		   << "        <title>" << s.captionText << "</title>" << endl
+		   << "        <meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" />" << endl
 		   << "        <style>" << endl
 		   << "          h1 {" << endl
 		   << "            text-align: center;" << endl
@@ -87,6 +83,7 @@ void dumpDefaultTOCStyleSheet(QTextStream & stream, settings::TableOfContent & s
 		   << "        </div>" << endl
 		   << "      </xsl:if>" << endl
 		   << "      <ul>" << endl
+		   << "        <xsl:comment>added to prevent self-closing tags in QtXmlPatterns</xsl:comment>" << endl
 		   << "        <xsl:apply-templates select=\"outline:item\"/>" << endl
 		   << "      </ul>" << endl
 		   << "    </li>" << endl

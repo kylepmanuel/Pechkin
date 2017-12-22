@@ -38,12 +38,13 @@ namespace wkhtmltopdf {
   \param message The warning message
 */
 void ProgressFeedback::warning(const QString &message) {
-	if (quiet) return;
+	if (logLevel < settings::Warn) return;
 	fprintf(stderr, "Warning: %s",S(message));
 	for (int l = 9 + message.size(); l < lw; ++l)
 		fprintf(stderr, " ");
 	fprintf(stderr, "\n");
 	lw = 0;
+	fflush(stderr);
 }
 
 /*!
@@ -51,18 +52,20 @@ void ProgressFeedback::warning(const QString &message) {
   \param message The error message
 */
 void ProgressFeedback::error(const QString &message) {
+	if (logLevel < settings::Error) return;
 	fprintf(stderr, "Error: %s",S(message));
 	for (int l = 7 + message.size(); l < lw; ++l)
 		fprintf(stderr, " ");
 	fprintf(stderr, "\n");
 	lw = 0;
+	fflush(stderr);
 }
 
 /*!
   \brief Write out the name of the next phase
 */
 void ProgressFeedback::phaseChanged() {
-	if (quiet) return;
+	if (logLevel < settings::Info) return;
 	QString desc=converter.phaseDescription();
 	fprintf(stderr, "%s", S(desc));
 
@@ -73,13 +76,14 @@ void ProgressFeedback::phaseChanged() {
 		fprintf(stderr, " ");
 	fprintf(stderr, "\n");
 	lw = 0;
+	fflush(stderr);
 }
 
 /*!
   \brief Update progress bar
 */
 void ProgressFeedback::progressChanged(int progress) {
-	if (quiet) return;
+	if (logLevel < settings::Info) return;
 	fprintf(stderr, "[");
 	int w=60;
 	progress *= w;
@@ -95,10 +99,11 @@ void ProgressFeedback::progressChanged(int progress) {
 	for (int i=l; i < lw; ++i) fprintf(stderr, " ");
 	lw = l;
 	fprintf(stderr, "\r");
+	fflush(stderr);
 }
 
-ProgressFeedback::ProgressFeedback(bool q, Converter & _):
-    quiet(q), converter(_), lw(0) {
+ProgressFeedback::ProgressFeedback(settings::LogLevel l, Converter & _):
+    logLevel(l), converter(_), lw(0) {
     connect(&converter, SIGNAL(warning(const QString &)), this, SLOT(warning(const QString &)));
 	connect(&converter, SIGNAL(error(const QString &)), this, SLOT(error(const QString &)));
 	connect(&converter, SIGNAL(phaseChanged()), this, SLOT(phaseChanged()));

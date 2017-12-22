@@ -20,11 +20,6 @@
 
 #ifndef __OUTLINE_HH__
 #define __OUTLINE_HH__
-#ifdef __WKHTMLTOX_UNDEF_QT_DLL__
-#ifdef QT_DLL
-#undef QT_DLL
-#endif
-#endif
 
 #include "pdfsettings.hh"
 #include <QWebElement>
@@ -49,7 +44,7 @@ public:
 	int pageCount();
 	void printOutline(QPrinter * printer);
 
-	void dump(QTextStream & stream, const QString & xsl) const;
+	void dump(QTextStream & stream) const;
 private:
 	OutlinePrivate * d;
 	friend class TocPrinter;

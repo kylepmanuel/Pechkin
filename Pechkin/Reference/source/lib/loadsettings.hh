@@ -1,7 +1,7 @@
 // -*- mode: c++; tab-width: 4; indent-tabs-mode: t; eval: (progn (c-set-style "stroustrup") (c-set-offset 'innamespace 0)); -*-
 // vi:set ts=4 sts=4 sw=4 noet :
 //
-// Copyright 2010 wkhtmltopdf authors
+// Copyright 2010, 2012 wkhtmltopdf authors
 //
 // This file is part of wkhtmltopdf.
 //
@@ -20,11 +20,6 @@
 
 #ifndef __LOADSETTINGS_HH__
 #define __LOADSETTINGS_HH__
-#ifdef __WKHTMLTOX_UNDEF_QT_DLL__
-#ifdef QT_DLL
-#undef QT_DLL
-#endif
-#endif
 
 #include <QNetworkProxy>
 #include <QString>
@@ -33,7 +28,7 @@
 namespace wkhtmltopdf {
 namespace settings {
 
-/*! \brief Settings consdering proxy */
+/*! \brief Settings considering proxy */
 struct DLL_PUBLIC Proxy {
 	Proxy();
 	//! Type of proxy to use
@@ -75,6 +70,15 @@ struct DLL_PUBLIC LoadPage {
 	//! Password used for http auth login
 	QString password;
 
+	//! Path to the ssl client cert private key in OpenSSL PEM format
+	QString clientSslKeyPath;
+
+	//! Password to ssl client cert private key
+	QString clientSslKeyPassword;
+
+	//! Path to the ssl client cert public key in OpenSSL PEM format, optionally followed by intermediate ca and trusted certs
+	QString clientSslCrtPath;
+
 	//! How many milliseconds should we wait for a Javascript redirect
 	int jsdelay;
 
@@ -85,7 +89,7 @@ struct DLL_PUBLIC LoadPage {
 	// TODO MOVE
 	float zoomFactor;
 
-	//! Map of custum header variables
+	//! Map of custom header variables
 	QList< QPair<QString, QString> > customHeaders;
 
 	//! Set if the custom header should be repeated for each resource request
@@ -110,6 +114,7 @@ struct DLL_PUBLIC LoadPage {
 
 	//! What should we do about load errors
 	LoadErrorHandling loadErrorHandling;
+	LoadErrorHandling mediaLoadErrorHandling;
 
 	//! Proxy related settings
 	Proxy proxy;
@@ -121,6 +126,15 @@ struct DLL_PUBLIC LoadPage {
 	QString checkboxCheckedSvg;
 	QString radiobuttonSvg;
 	QString radiobuttonCheckedSvg;
+
+	QString cacheDir;
+	static QList<QString> mediaFilesExtensions;
+
+	// Hosts to bypass
+	QList< QString > bypassProxyForHosts;
+
+	//! Whether to use the proxy for resolving hostnames
+	bool proxyHostNameLookup;
 };
 
 DLL_PUBLIC LoadPage::LoadErrorHandling strToLoadErrorHandling(const char * s, bool * ok=0);

@@ -18,15 +18,12 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with wkhtmltopdf.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifdef __WKHTMLTOX_UNDEF_QT_DLL__
-#ifdef QT_DLL
-#undef QT_DLL
-#endif
-#endif
 
 #include "utilities.hh"
 #include <QDebug>
 #include <QTextStream>
+#include <QMetaEnum>
+#include <QNetworkReply>
 
 void loadSvg(QSvgRenderer * & ptr, const QString & path, const char * def, int w, int h) {
 	 delete ptr;
@@ -34,7 +31,7 @@ void loadSvg(QSvgRenderer * & ptr, const QString & path, const char * def, int w
 	 if (path != "") {
 	 	ptr = new QSvgRenderer(path);
 		if (ptr->isValid()) return;
-		qWarning() << "Faild to load " << path;
+		qWarning() << "Failed to load " << path;
 		delete ptr;
 	 }
 
@@ -160,8 +157,24 @@ int handleError(bool success, int errorCode) {
 		if (ce.contains(errorCode)) c = ce[errorCode];
 		const char * m = "";
 		if (cm.contains(errorCode)) m = cm[errorCode];
-		fprintf(stderr, "Exit with code %d due to http error: %d %s\n", c, errorCode, m);
+		if (errorCode < 1000) {
+			fprintf(stderr, "Exit with code %d due to http error: %d %s\n", c, errorCode, m);
+		} else {
+			QNetworkReply::NetworkError error = (QNetworkReply::NetworkError)(errorCode - 1000);
+			QString errorValue;
+			QMetaObject meta = QNetworkReply::staticMetaObject;
+			for (int i=0; i < meta.enumeratorCount(); ++i) {
+				QMetaEnum m = meta.enumerator(i);
+				if (m.name() == QLatin1String("NetworkError")) {
+					errorValue = QLatin1String(m.valueToKey(error));
+					break;
+				}
+			}
+			fprintf(stderr, "Exit with code %d due to network error: %s\n", c, errorValue.toLocal8Bit().data());
+		}
 		return c;
+	} else if (!success) {
+		fprintf(stderr, "Exit with code %d, due to unknown error.\n", EXIT_FAILURE);
 	}
 	return success?EXIT_SUCCESS:EXIT_FAILURE;
 }

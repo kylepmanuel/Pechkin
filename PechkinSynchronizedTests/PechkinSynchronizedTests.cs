@@ -41,8 +41,10 @@ namespace PechkinSynchronizedTests
             // oh well, this test doesn't fail if it does, because there's no assertions or exceptions (or anything) in threads
             // but log and debug should show anomalies (and todo I should assert on them)
 
-            NameValueCollection properties = new NameValueCollection();
-            properties["showDateTime"] = "true";
+            var properties = new Common.Logging.Configuration.NameValueCollection
+            {
+                ["showDateTime"] = "true"
+            };
 
             LogManager.Adapter = new Common.Logging.Simple.ConsoleOutLoggerFactoryAdapter(properties); 
 
@@ -53,7 +55,7 @@ namespace PechkinSynchronizedTests
                                          Thread.CurrentThread.Name = "test thread " + (_threadId++).ToString();
                                      }
 
-                                     ILog log = LogManager.GetCurrentClassLogger();
+                                     ILog log = LogManager.GetLogger<PechkinSynchronizedTests>();
                                      log.Trace("T:" + Thread.CurrentThread.Name + " Thread started");
 
                                      string html = GetResourceString("PechkinTests.Resources.page.html");

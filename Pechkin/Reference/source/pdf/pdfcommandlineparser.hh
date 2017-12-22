@@ -52,9 +52,8 @@ public:
 	void outputPageBreakDoc(Outputter * o) const;
 	void outputContact(Outputter * o) const;
 	void outputDocStart(Outputter * o) const;
-	void outputCompilation(Outputter * o) const;
 	void outputInstallation(Outputter * o) const;
-	void outputExampels(Outputter * o) const;
+	void outputExamples(Outputter * o) const;
 
 	//commandlineparser.cc
 	virtual QString appName() const {return "wkhtmltopdf";}

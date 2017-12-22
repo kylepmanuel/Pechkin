@@ -20,11 +20,6 @@
 
 #ifndef __MULTIPAGELOADER_P_HH__
 #define __MULTIPAGELOADER_P_HH__
-#ifdef __WKHTMLTOX_UNDEF_QT_DLL__
-#ifdef QT_DLL
-#undef QT_DLL
-#endif
-#endif
 
 #include "multipageloader.hh"
 #include "tempfile.hh"
@@ -40,17 +35,30 @@
 #include "dllbegin.inc"
 namespace wkhtmltopdf {
 
+class DLL_LOCAL MyNetworkProxyFactory: public QObject, public QNetworkProxyFactory {
+	Q_OBJECT
+private:
+	QList<QString> bypassHosts;
+	QList<QNetworkProxy> originalProxy, noProxy;
+public:
+	MyNetworkProxyFactory(QNetworkProxy defaultProxy, QList<QString> bypassHosts);
+	QList<QNetworkProxy> queryProxy (const QNetworkProxyQuery & query);
+};
+
 class DLL_LOCAL MyNetworkAccessManager: public QNetworkAccessManager {
 	Q_OBJECT
 private:
+	bool disposed;
 	QSet<QString> allowed;
 	const settings::LoadPage & settings;
 public:
+	void dispose();
 	void allow(QString path);
 	MyNetworkAccessManager(const settings::LoadPage & s);
 	QNetworkReply * createRequest(Operation op, const QNetworkRequest & req, QIODevice * outgoingData = 0);
 signals:
 	void warning(const QString & text);
+	void error(const QString & text);
 };
 
 class DLL_LOCAL MultiPageLoaderPrivate;
@@ -105,6 +113,7 @@ class DLL_LOCAL MyCookieJar: public QNetworkCookieJar {
 private:
 	QList<QNetworkCookie> extraCookies;
 public:
+	void clearExtraCookies();
 	void useCookie(const QUrl & url, const QString & name, const QString & value);
 	QList<QNetworkCookie> cookiesForUrl(const QUrl & url) const;
 	void loadFromFile(const QString & path);
@@ -123,12 +132,14 @@ public:
 
 	int loading;
 	int progressSum;
+	bool isMainLoader;
 	bool loadStartedEmitted;
 	bool hasError;
 	bool finishedEmitted;
 	TempFile tempIn;
+	int dpi;
 
-	MultiPageLoaderPrivate(const settings::LoadGlobal & settings, MultiPageLoader & o);
+	MultiPageLoaderPrivate(const settings::LoadGlobal & settings, int dpi, MultiPageLoader & o);
 	~MultiPageLoaderPrivate();
 	LoaderObject * addResource(const QUrl & url, const settings::LoadPage & settings);
 	void load();

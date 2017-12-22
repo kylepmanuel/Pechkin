@@ -18,16 +18,20 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with wkhtmltopdf.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifdef __WKHTMLTOX_UNDEF_QT_DLL__
-#ifdef QT_DLL
-#undef QT_DLL
-#endif
-#endif
 
 #include "converter_p.hh"
 #include "multipageloader.hh"
 #include <QWebFrame>
 #include <qapplication.h>
+
+#ifdef QT4_STATICPLUGIN_TEXTCODECS
+#include <QtPlugin>
+Q_IMPORT_PLUGIN(qcncodecs)
+Q_IMPORT_PLUGIN(qjpcodecs)
+Q_IMPORT_PLUGIN(qkrcodecs)
+Q_IMPORT_PLUGIN(qtwcodecs)
+#endif
+
 namespace wkhtmltopdf {
 
 
@@ -46,19 +50,17 @@ void ConverterPrivate::updateWebSettings(QWebSettings * ws, const settings::Web 
 	ws->setAttribute(QWebSettings::JavascriptCanOpenWindows, false);
 	ws->setAttribute(QWebSettings::JavascriptCanAccessClipboard, false);
 	ws->setFontSize(QWebSettings::MinimumFontSize, s.minimumFontSize);
-#if QT_VERSION >= 0x040500
-	//Newer vertions of QT have even more settings to change
+	//Newer versions of QT have even more settings to change
 	ws->setAttribute(QWebSettings::PrintElementBackgrounds, s.background);
 	ws->setAttribute(QWebSettings::AutoLoadImages, s.loadImages);
 	ws->setAttribute(QWebSettings::PluginsEnabled, s.enablePlugins);
 	if (!s.userStyleSheet.isEmpty())
 		ws->setUserStyleSheetUrl(MultiPageLoader::guessUrlFromString(s.userStyleSheet));
-#endif
 }
 
 void ConverterPrivate::fail() {
 	error = true;
-	convertionDone = true;
+	conversionDone = true;
 	clearResources();
 	emit outer().finished(false);
 	qApp->exit(0); // quit qt's event handling
@@ -86,9 +88,9 @@ void ConverterPrivate::cancel() {
 }
 
 bool ConverterPrivate::convert() {
-	convertionDone=false;
+	conversionDone=false;
 	beginConvert();
-	while (!convertionDone)
+	while (!conversionDone)
 		qApp->processEvents(QEventLoop::WaitForMoreEvents | QEventLoop::AllEvents);
 	return !error;
 }
@@ -136,7 +138,7 @@ int Converter::httpErrorCode() {
   \brief Start a asynchronous conversion of html pages to a pdf document.
   Once conversion is done an finished signal will be emitted
 */
-void Converter::beginConvertion() {
+void Converter::beginConversion() {
 	priv().beginConvert();
 }
 

@@ -20,9 +20,7 @@
 
 #include "commandlineparserbase.hh"
 #include "outputter.hh"
-
-#define STRINGIZE_(x) #x
-#define STRINGIZE(x) STRINGIZE_(x)
+#include <QFile>
 
 /*!
   Output the name and version of the program, and also whether we are using a patched qt
@@ -30,9 +28,8 @@
 */
 void CommandLineParserBase::outputName(Outputter * o) const {
 	o->beginSection("Name");
-	o->paragraph(appName()+" "+QString::number(MAJOR_VERSION)+"."+QString::number(MINOR_VERSION)+"."+QString::number(PATCH_VERSION)+(QString(STRINGIZE(BUILD)).isEmpty()?"":" ")+STRINGIZE(BUILD));
+	o->paragraph(appName()+" "+appVersion());
 	o->endSection();
-
 }
 
 /*!
@@ -41,14 +38,12 @@ void CommandLineParserBase::outputName(Outputter * o) const {
 */
 void CommandLineParserBase::outputLicense(Outputter * o) const {
 	o->beginSection("License");
-	o->paragraph("Copyright (C) 2010 wkhtmltopdf/wkhtmltoimage Authors.");
-	o->endParagraph();
-	o->beginParagraph();
-	o->text("License LGPLv3+: GNU Lesser General Public License version 3 or later ");
-	o->link("http://gnu.org/licenses/lgpl.html");
-	o->text(". This is free software: you are free to change and redistribute it. "
-			"There is NO WARRANTY, to the extent permitted by law.");
-	o->endParagraph();
+	o->paragraph("Copyright (c) 2010-2014 wkhtmltopdf authors");
+	QFile file(":/LICENSE");
+	file.open(QIODevice::ReadOnly | QIODevice::Text);
+	QTextStream stream(&file);
+	o->verbatim(stream.readAll());
+	o->endSection();
 }
 
 /*!
@@ -57,10 +52,10 @@ void CommandLineParserBase::outputLicense(Outputter * o) const {
 */
 void CommandLineParserBase::outputAuthors(Outputter * o) const {
 	o->beginSection("Authors");
-	o->paragraph(
-		QString::fromUtf8(
-			"Written by Jan Habermann, Christian Sciberras and Jakob Truelsen. "
-			"Patches by Mehdi Abbad, Lyes Amazouz, Pascal Bach, Emmanuel Bouthenot, Benoit Garret and Mário Silva."));
+	QFile file(":/AUTHORS");
+	file.open(QIODevice::ReadOnly | QIODevice::Text);
+	QTextStream stream(&file);
+	o->verbatim(stream.readAll());
 	o->endSection();
 }
 
@@ -72,7 +67,7 @@ void CommandLineParserBase::outputStaticProblems(Outputter * o) const {
 	o->beginSection("Static version");
 	o->beginParagraph();
 	o->text("On the wkhtmltopdf website you can download a static version of wkhtmltopdf ");
-	o->link("http://code.google.com/p/wkhtmltopdf/downloads/list");
+	o->link("http://wkhtmltopdf.org/downloads.html");
 	o->text(". This static binary will work on most systems and comes with a build in patched QT.");
 	o->endParagraph();
 
@@ -80,9 +75,7 @@ void CommandLineParserBase::outputStaticProblems(Outputter * o) const {
 	o->text("Unfortunately the static binary is not particularly static, on Linux it depends "
 			"on both glibc and openssl, furthermore you will need to have an xserver installed "
 			"but not necessary running. You will need to have different fonts install including "
-			"xfonts-scalable (Type1), and msttcorefonts.  See ");
-	o->link("http://code.google.com/p/wkhtmltopdf/wiki/static");
-	o->text(" for trouble shouting.");
+			"xfonts-scalable (Type1), and msttcorefonts.");
 	o->endParagraph();
 	o->endSection();
 }
@@ -100,7 +93,7 @@ void CommandLineParserBase::outputProxyDoc(Outputter * o) const {
 	o->verbatim(
 		"<type> := \"http://\" | \"socks5://\"\n"
 		"<serif> := <username> (\":\" <password>)? \"@\"\n"
-		"<proxy> := \"None\" | <type>? <sering>? <host> (\":\" <port>)?\n");
+		"<proxy> := \"None\" | <type>? <string>? <host> (\":\" <port>)?\n");
 	o->paragraph("Here are some examples (In case you are unfamiliar with the BNF):");
 	o->verbatim("http://user:password@myproxyserver:8080\n"
 				"socks5://myproxyserver\n"

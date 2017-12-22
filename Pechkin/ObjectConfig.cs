@@ -676,7 +676,7 @@ namespace Pechkin
 
         internal void SetUpObjectConfig(IntPtr config)
         {
-            ILog log = LogManager.GetCurrentClassLogger();
+            ILog log = LogManager.GetLogger<ObjectConfig>();
             if (log.IsTraceEnabled)
             {
                 log.Trace("T:" + Thread.CurrentThread.Name + " Setting up object config (many wkhtmltopdf_set_object_setting)");

@@ -20,16 +20,12 @@
 
 #ifndef __REFLECT_HH__
 #define __REFLECT_HH__
-#ifdef __WKHTMLTOX_UNDEF_QT_DLL__
-#ifdef QT_DLL
-#undef QT_DLL
-#endif
-#endif
 
 #if defined(_MSC_VER) && _MSC_VER>=1600
 #define typeof decltype
 #endif
 
+#include "logging.hh"
 #include "loadsettings.hh"
 #include "websettings.hh"
 #include <QStringList>
@@ -66,10 +62,38 @@ public:
 	~ReflectClass();
 };
 
+class DLL_LOCAL QuietArgBackwardsCompatReflect: public ReflectSimple {
+	LogLevel & l;
+public:
+	QuietArgBackwardsCompatReflect(LogLevel & _): l(_) {}
+	QString get() {return l == None ? "true":"false";}
+	void set(const QString & value, bool * ok) {
+		if (value == "true") l=None;
+		else if (value == "false") l=Info;
+		else {
+			*ok=false;
+			return;
+		}
+		*ok=true;
+	}
+};
+
 template <typename X>
 class DLL_LOCAL ReflectImpl {
 private:
 	ReflectImpl();
+};
+
+template<>
+struct DLL_LOCAL ReflectImpl<LogLevel>: public ReflectSimple {
+	LogLevel & l;
+	ReflectImpl(LogLevel & _): l(_) {	}
+	QString get() {
+		return logLevelToStr(l, 0);
+	}
+	void set(const QString & value, bool * ok) {
+		l = strToLogLevel(qPrintable(value), ok);
+	}
 };
 
 template<>
@@ -80,7 +104,10 @@ struct DLL_LOCAL ReflectImpl<bool>: public ReflectSimple {
 	void set(const QString & value, bool * ok) {
 		if (value == "true") b=true;
 		else if (value == "false") b=false;
-		else *ok=false;
+		else {
+			*ok=false;
+			return;
+		}
 		*ok=true;
 	}
 };
@@ -115,16 +142,15 @@ struct DLL_LOCAL ReflectImpl< QPair<QString, QString> >: public ReflectSimple {
 	ReflectImpl(QPair<QString, QString> & _): p(_) {};
 
 	QString get() {
-		return p.first.replace("\\", "\\\\").replace(",", "\\,") + "," +
-			p.second.replace("\\", "\\\\").replace(",", "\\,");
+		return p.first + "\n" + p.second;
 	}
 
 	void set(const QString & value, bool * ok) {
-		QStringList l = value.split(",");
-		if (l.size() != 0) {*ok=false; return;}
-		*ok=true;
-		p.first = l[0].replace("\\,",",").replace("\\\\","\\");
-		p.second = l[1].replace("\\,",",").replace("\\\\","\\");
+		QStringList l = value.split("\n");
+		if (l.size() != 2) {*ok=false; return;}
+		*ok      = true;
+		p.first  = l[0];
+		p.second = l[1];
 	}
 };
 
@@ -141,12 +167,12 @@ struct DLL_LOCAL ReflectImpl< QList< X> >: public Reflect {
 			next = 0;
 			while (name[next] != '\0' && name[next] != ']') ++next;
 			bool ok=true;
-			elm = QString::fromAscii(name+1,next-1).toInt(&ok);
-			if (name[next] == ']') ++next;
+			elm = QString::fromLocal8Bit(name+1,next-1).toInt(&ok);
+			while (name[next] == ']' || name[next] == '.') ++next;
 			return ok;
 		}
 		parmsize = 0;
-		while (name[parmsize] != '\0' || name[parmsize] != '.' || name[parmsize] != '[') ++parmsize;
+		while (name[parmsize] != '\0' && name[parmsize] != '.' && name[parmsize] != '[') ++parmsize;
 		next = parmsize;
 		if (name[next] == '.') ++next;
 		return true;
@@ -154,9 +180,10 @@ struct DLL_LOCAL ReflectImpl< QList< X> >: public Reflect {
 
 	virtual QString get(const char * name) {
 		int ps, next, elm;
-		if (!strcmp(name,"size")) return QString::number(l.size());
-		parse(name, ps, next, elm);
-		if (ps > 0 || !strncmp(name, "last", ps)) elm = l.size() -1;
+		if (!strcmp(name,"size") || !strcmp(name,"length") || !strcmp(name,"count")) return QString::number(l.size());
+		if (!parse(name, ps, next, elm)) return QString();
+		if (ps > 0 && !l.isEmpty() && !strncmp(name, "first", ps)) elm = 0;
+		if (ps > 0 && !l.isEmpty() && !strncmp(name, "last",  ps)) elm = l.size() - 1;
 		if (elm < 0 || elm >= l.size()) return QString();
 		ReflectImpl<X> impl(l[elm]);
 		return static_cast<Reflect*>(&impl)->get(name+next);
@@ -166,17 +193,23 @@ struct DLL_LOCAL ReflectImpl< QList< X> >: public Reflect {
 		int ps, next, elm;
 		if (!strcmp(name,"clear"))
 			l.clear();
-		else if (!strcmp(name,"pop"))
-			l.pop_back();
 		else if (!strcmp(name,"append"))
-			l.push_front(X());
-		else {
-			parse(name, ps, next, elm);
-			if (ps > 0 || !strncmp(name, "last", ps)) elm = l.size() -1;
-			if (ps > 0 || !strncmp(name, "append", ps)) {
-				l.push_front(X());
-				elm = l.size() -1;
+			l.append(X());
+		else if (!strcmp(name,"prepend"))
+			l.prepend(X());
+		else if (!strcmp(name,"delete")) {
+			bool ok = true;
+			int idx = value.toInt(&ok);
+			if (ok && idx >= 0 && idx < l.size()) {
+				l.removeAt(idx);
+				return true;
 			}
+			return false;
+		}
+		else {
+			if (!parse(name, ps, next, elm)) return false;
+			if (ps > 0 && !l.isEmpty() && !strncmp(name, "first", ps)) elm = 0;
+			if (ps > 0 && !l.isEmpty() && !strncmp(name, "last",  ps)) elm = l.size() - 1;
 			ReflectImpl<X> impl(l[elm]);
 			return static_cast<Reflect *>(&impl)->set(name+next, value);
 		}

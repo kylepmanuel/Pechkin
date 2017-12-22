@@ -91,7 +91,7 @@ void ImageCommandLineParser::readme(FILE * fd, bool html) const {
 // 	foreach (ArgHandler * h, d->longToHandler)
 // 		h->useDefault(*d);
 
-// 	//Load configuration from enviornment
+// 	//Load configuration from environment
 // 	char * val;
 // 	const char * vars[] = {"proxy","all_proxy","http_proxy", NULL};
 // 	for (int i=0; vars[i]; ++i) {
@@ -115,9 +115,9 @@ void ImageCommandLineParser::parseArguments(int argc, const char ** argv, bool f
 	bool defaultMode=false;
 	for (int i=1; i < argc; ++i) {
         if (i==argc-2 && (argv[i][0] != '-' || argv[i][1] == '\0')) { // the arg before last (in)
-            settings.in = argv[i];
+            settings.in = QString::fromLocal8Bit(argv[i]);
         } else if (i==argc-1 && (argv[i][0] != '-' || argv[i][1] == '\0')) { // the last arg (out)
-            settings.out = argv[i];
+            settings.out = QString::fromLocal8Bit(argv[i]);
 		} else {
 			parseArg(global, argc, argv, defaultMode, i, 0);
 		}

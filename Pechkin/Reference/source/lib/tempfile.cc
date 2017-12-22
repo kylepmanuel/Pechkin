@@ -18,11 +18,6 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with wkhtmltopdf.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifdef __WKHTMLTOX_UNDEF_QT_DLL__
-#ifdef QT_DLL
-#undef QT_DLL
-#endif
-#endif
 
 #include "tempfile.hh"
 #include <QDir>
@@ -38,31 +33,31 @@
 
 /*!
   \class TempFile
-  \brief Class responsible for creating and deleting temporery files
+  \brief Class responsible for creating and deleting temporary files
 */
 TempFile::TempFile() {
 }
 
 TempFile::~TempFile() {
-	remove();
+	removeAll();
 }
 
 /*!
-  \brief Create a new temporery file, deleteing the old if one exists
-  \param ext The extention of the temporery file
-  \returns Path of the new temporery file
+  \brief Create a new temporary file
+  \param ext The extension of the temporary file
+  \returns Path of the new temporary file
 */
 QString TempFile::create(const QString & ext) {
-	remove();
-	path = QDir::tempPath()+"/wktemp-"+QUuid::createUuid().toString().mid(1,36)+ext;
+	QString path = QDir::tempPath()+"/wktemp-"+QUuid::createUuid().toString().mid(1,36)+ext;
+	paths.append(path);
 	return path;
 }
 
 /*!
-  \brief Remove the temporery file hold by this object it it exists
+  \brief Remove all the temporary files held by this object
 */
-void TempFile::remove() {
-	if (!path.isEmpty())
+void TempFile::removeAll() {
+	foreach (const QString &path, paths)
 		QFile::remove(path);
-	path="";
+	paths.clear();
 }

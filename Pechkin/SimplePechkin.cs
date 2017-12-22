@@ -16,7 +16,7 @@ namespace Pechkin
     /// </summary>
     public class SimplePechkin : IPechkin, IDisposable
     {
-        private readonly ILog _log = LogManager.GetCurrentClassLogger();
+        private readonly ILog _log = LogManager.GetLogger<SimplePechkin>();
 
         private readonly GlobalConfig _globalConfig;
         private IntPtr _globalConfigUnmanaged;
@@ -40,7 +40,7 @@ namespace Pechkin
             BeginEventHandler handler = Begin;
             try
             {
-                if (handler != null) handler(this, expectedPhaseCount);
+                handler?.Invoke(this, expectedPhaseCount);
             } catch (Exception e)
             {
                 _log.Warn("T:" + Thread.CurrentThread.Name + " Exception in Begin event handler", e);
@@ -65,7 +65,7 @@ namespace Pechkin
             WarningEventHandler handler = Warning;
             try
             {
-                if (handler != null) handler(this, warningText);
+                handler?.Invoke(this, warningText);
             }
             catch (Exception e)
             {
@@ -91,7 +91,7 @@ namespace Pechkin
             ErrorEventHandler handler = Error;
             try
             {
-                if (handler != null) handler(this, errorText);
+                handler?.Invoke(this, errorText);
             }
             catch (Exception e)
             {
@@ -118,7 +118,7 @@ namespace Pechkin
             PhaseChangedEventHandler handler = PhaseChanged;
             try
             {
-                if (handler != null) handler(this, phaseNumber, phaseDescription);
+                handler?.Invoke(this, phaseNumber, phaseDescription);
             }
             catch (Exception e)
             {
@@ -146,7 +146,7 @@ namespace Pechkin
             ProgressChangedEventHandler handler = ProgressChanged;
             try
             {
-                if (handler != null) handler(this, progress, progressDescription);
+                handler?.Invoke(this, progress, progressDescription);
             }
             catch (Exception e)
             {
@@ -170,7 +170,7 @@ namespace Pechkin
             FinishEventHandler handler = Finished;
             try
             {
-                if (handler != null) handler(this, success != 0);
+                handler?.Invoke(this, success != 0);
             }
             catch (Exception e)
             {

@@ -26,7 +26,14 @@
 #include <wkhtmltox/imagesettings.hh>
 #include <wkhtmltox/utilities.hh>
 
+#if defined(Q_OS_UNIX)
+#include <locale.h>
+#endif
+
 int main(int argc, char** argv) {
+#if defined(Q_OS_UNIX)
+	setlocale(LC_ALL, "");
+#endif
 	//This will store all our settings
 	wkhtmltopdf::settings::ImageGlobal settings;
 	//Create a command line parser to parse commandline arguments
@@ -36,7 +43,7 @@ int main(int argc, char** argv) {
 
 
 	bool use_graphics=true;
-#if defined(Q_WS_X11) || defined(Q_WS_MACX)
+#if defined(Q_OS_UNIX) || defined(Q_OS_MAC)
 #ifdef __EXTENSIVE_WKHTMLTOPDF_QT_HACK__
 	use_graphics=settings.useGraphics;
 	if (!use_graphics) QApplication::setGraphicsSystem("raster");
@@ -53,7 +60,7 @@ int main(int argc, char** argv) {
 	QObject::connect(&converter, SIGNAL(radiobuttonSvgChanged(const QString &)), style, SLOT(setRadioButtonSvg(const QString &)));
 	QObject::connect(&converter, SIGNAL(radiobuttonCheckedSvgChanged(const QString &)), style, SLOT(setRadioButtonCheckedSvg(const QString &)));
 
-	wkhtmltopdf::ProgressFeedback feedback(settings.quiet, converter);
+	wkhtmltopdf::ProgressFeedback feedback(settings.logLevel, converter);
 	bool success = converter.convert();
 	return handleError(success, converter.httpErrorCode());
 }

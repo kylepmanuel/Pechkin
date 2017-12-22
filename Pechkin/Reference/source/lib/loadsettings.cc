@@ -1,7 +1,7 @@
 // -*- mode: c++; tab-width: 4; indent-tabs-mode: t; eval: (progn (c-set-style "stroustrup") (c-set-offset 'innamespace 0)); -*-
 // vi:set ts=4 sts=4 sw=4 noet :
 //
-// Copyright 2010 wkhtmltopdf authors
+// Copyright 2010, 2012 wkhtmltopdf authors
 //
 // This file is part of wkhtmltopdf.
 //
@@ -18,11 +18,6 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with wkhtmltopdf.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifdef __WKHTMLTOX_UNDEF_QT_DLL__
-#ifdef QT_DLL
-#undef QT_DLL
-#endif
-#endif
 
 #ifdef _MSC_VER
 #define strcasecmp _stricmp
@@ -33,6 +28,15 @@
 #include <stdexcept>
 namespace wkhtmltopdf {
 namespace settings {
+
+QList<QString> LoadPage::mediaFilesExtensions = QList<QString> ()
+		<< "css"
+		<< "js"
+		<< "png"
+		<< "jpg"
+		<< "jpeg"
+		<< "gif";
+
 
 LoadPage::LoadErrorHandling strToLoadErrorHandling(const char * s, bool * ok) {
 	if (ok) *ok = true;
@@ -76,7 +80,7 @@ Proxy strToProxy(const char * proxy, bool * ok) {
 	}
 
 	//Read username and password
-	char * val = (char *) strchr(proxy,'@');
+	char * val = (char *) strrchr(proxy,'@');
 	p.user = p.password = "";
 	if (val != NULL) {
 		p.user = QString(proxy).left(val-proxy);
@@ -117,7 +121,7 @@ QString proxyToStr(const Proxy & p) {
 		if (!p.password.isEmpty()) res += ":" + p.password;
 	}
 	res += p.host;
-	if (!p.host.isEmpty()) res += ":" + p.port;
+	if (!p.host.isEmpty()) res += ":" + QString::number(p.port);
 	return res;
 }
 
@@ -129,7 +133,7 @@ Proxy::Proxy():
 	password() {}
 
 LoadGlobal::LoadGlobal():
-	cookieJar("") {};
+	cookieJar("") {}
 
 LoadPage::LoadPage():
 	jsdelay(200),
@@ -139,7 +143,10 @@ LoadPage::LoadPage():
 	blockLocalFileAccess(false),
 	stopSlowScripts(true),
 	debugJavascript(false),
-	loadErrorHandling(abort) {};
+	loadErrorHandling(abort),
+	mediaLoadErrorHandling(ignore),
+	cacheDir(""),
+	proxyHostNameLookup(false) {};
 
 }
 }

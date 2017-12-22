@@ -20,15 +20,11 @@
 
 #ifndef __PDFSETTINGS_HH__
 #define __PDFSETTINGS_HH__
-#ifdef __WKHTMLTOX_UNDEF_QT_DLL__
-#ifdef QT_DLL
-#undef QT_DLL
-#endif
-#endif
 
 #include <QNetworkProxy>
 #include <QPrinter>
 #include <QString>
+#include <wkhtmltox/logging.hh>
 #include <wkhtmltox/loadsettings.hh>
 #include <wkhtmltox/websettings.hh>
 
@@ -38,7 +34,7 @@ namespace settings {
 
 typedef QPair<qreal, QPrinter::Unit> UnitReal;
 
-/*! \brief Settings consdering margins */
+/*! \brief Settings considering margins */
 struct DLL_PUBLIC Margin {
 	Margin();
 	//!Margin applied to the top of the page
@@ -62,7 +58,7 @@ struct DLL_PUBLIC Size {
 	UnitReal width;
 };
 
-/*! \brief Settings considdirng the table of content */
+/*! \brief Settings considering the table of content */
 struct DLL_PUBLIC TableOfContent {
 	TableOfContent();
 	//! Should we print dots between the name and the page number?
@@ -90,11 +86,14 @@ struct DLL_PUBLIC PdfGlobal {
 	//! Size related settings
 	Size size;
 
-	//! Be less verbose
-	bool quiet;
+	//! Log level
+	LogLevel logLevel;
 
 	//! Should we use the graphics system
 	bool useGraphics;
+
+	//! Should relative links be resolved or kept as-is
+	bool resolveRelativeLinks;
 
 	//! Should we orientate in landscape or portrate
 	QPrinter::Orientation orientation;
@@ -114,7 +113,7 @@ struct DLL_PUBLIC PdfGlobal {
 	//! How many copies do we wan to print
 	int copies;
 
-	//! Should be print a whole copy before beginnig the next
+	//! Should be print a whole copy before beginning the next
 	bool collate;
 
 	//! Should we generate an outline and put it into the pdf file
@@ -136,8 +135,7 @@ struct DLL_PUBLIC PdfGlobal {
 	//! Margin related settings
 	Margin margin;
 
-	//! Specify the output format we should use
-	QString outputFormat;
+	QString viewportSize;
 
 	int imageDPI;
 	int imageQuality;
@@ -161,7 +159,7 @@ struct DLL_PUBLIC HeaderFooter {
 	QString right;
 	//! Text to render at the center
 	QString center;
-	//! Should a line seperate the header/footer and the document
+	//! Should a line separate the header/footer and the document
 	bool line;
 	//! Url of the document the html document that should be used as a header/footer
 	QString htmlUrl;
@@ -226,6 +224,8 @@ DLL_PUBLIC QPrinter::ColorMode strToColorMode(const char * s, bool * ok=0);
 DLL_PUBLIC QString colorModeToStr(QPrinter::ColorMode o);
 
 }
+
+DLL_PUBLIC void dumpDefaultTOCStyleSheet(QTextStream & stream, settings::TableOfContent & s);
 }
 #include <wkhtmltox/dllend.inc>
 #endif //__PDFSETTINGS_HH__

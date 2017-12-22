@@ -29,7 +29,7 @@ namespace Pechkin.Synchronized.Util
             public object Result;
         }
 
-        private readonly ILog _log = LogManager.GetCurrentClassLogger();
+        private readonly ILog _log = LogManager.GetLogger<SynchronizedDispatcherThread>();
 
         private readonly Thread _thread;
         private readonly object _sync = new Object(); // we wait on this object

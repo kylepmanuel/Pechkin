@@ -15,13 +15,13 @@ namespace Pechkin
     /// </summary>
     public static class PechkinStatic
     {
-        private static readonly ILog Log = LogManager.GetCurrentClassLogger();
+        private static readonly ILog Log = LogManager.GetLogger(nameof(PechkinStatic));
 
         private static bool _inited;
         private static bool _useHack;
-// ReSharper disable NotAccessedField.Local
+        // ReSharper disable NotAccessedField.Local
         private static SimplePechkin _hackObj;
-// ReSharper restore NotAccessedField.Local
+        // ReSharper restore NotAccessedField.Local
 
         /// <summary>
         /// Initializes wrapped library. This is done automatically when you need it.
@@ -44,10 +44,7 @@ namespace Pechkin
                 _hackObj = new SimplePechkin(new GlobalConfig());
             }
 
-            if (LibInit != null)
-            {
-                LibInit();
-            }
+            LibInit?.Invoke();
         }
 
         /// <summary>
@@ -58,10 +55,7 @@ namespace Pechkin
             if (!_inited) return;
             _inited = false;
 
-            if (LibDeInit != null)
-            {
-                LibDeInit();
-            }
+            LibDeInit?.Invoke();
 
             if (Log.IsTraceEnabled)
             {
@@ -331,8 +325,7 @@ namespace Pechkin
                 Log.Trace("T:" + Thread.CurrentThread.Name + " Requesting converter result (wkhtmltopdf_get_output)");
             }
 
-            IntPtr tmp;
-            var len = PechkinBindings.wkhtmltopdf_get_output(converter, out tmp);
+            var len = PechkinBindings.wkhtmltopdf_get_output(converter, out IntPtr tmp);
             var output = new byte[len];
             Marshal.Copy(tmp, output, 0, output.Length);
 

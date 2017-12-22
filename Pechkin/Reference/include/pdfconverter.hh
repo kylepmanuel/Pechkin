@@ -17,19 +17,12 @@
 
 #ifndef __PDFCONVERTER_HH__
 #define __PDFCONVERTER_HH__
-#ifdef __WKHTMLTOX_UNDEF_QT_DLL__
-#ifdef QT_DLL
-#undef QT_DLL
-#endif
-#endif
 
 #include <wkhtmltox/converter.hh>
 #include <wkhtmltox/pdfsettings.hh>
 
 #include <wkhtmltox/dllbegin.inc>
 namespace wkhtmltopdf {
-
-DLL_PUBLIC void dumpDefaultTOCStyleSheet(QTextStream & stream, settings::TableOfContent & s);
 
 class DLL_LOCAL PdfConverterPrivate;
 
@@ -42,6 +35,7 @@ public:
 	void addResource(const settings::PdfObject & pageSettings, const QString * data=0);
 	const settings::PdfGlobal & globalSettings() const;
 	const QByteArray & output();
+    static const qreal millimeterToPointMultiplier;
 private:
 	PdfConverterPrivate * d;
 	virtual ConverterPrivate & priv();

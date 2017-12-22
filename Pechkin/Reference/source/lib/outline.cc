@@ -18,11 +18,6 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with wkhtmltopdf.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifdef __WKHTMLTOX_UNDEF_QT_DLL__
-#ifdef QT_DLL
-#undef QT_DLL
-#endif
-#endif
 
 #include "outline_p.hh"
 #include <fstream>
@@ -95,7 +90,7 @@ bool OutlineItem::differentFrom(const OutlineItem * other) const {
 
 /*!
   \class OutlinePrivate
-  \brief Class providing implemenation details of Outline
+  \brief Class providing implementation details of Outline
 */
 
 OutlinePrivate::OutlinePrivate(const settings::PdfGlobal & s):
@@ -154,25 +149,22 @@ void OutlinePrivate::buildPrefixSum() {
 		prefixSum.push_back( prefixSum.back() + x);
 }
 
-void Outline::dump(QTextStream & stream, const QString & xsl) const {
+void Outline::dump(QTextStream & stream) const {
 	d->buildPrefixSum();
 	stream << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" << endl;
-	QString x = xsl;
-	if (!x.isEmpty())
-		stream << "<?xml-stylesheet type=\"text/xsl\" href=\"" << escape(x) << "\"?>" << endl;
-	stream << "<outline xmlns=\"http://code.google.com/p/wkhtmltopdf/outline\">" << endl;
+	stream << "<outline xmlns=\"http://wkhtmltopdf.org/outline\">" << endl;
 	d->dumpChildren(stream, d->documentOutlines, 1);
 	stream << "</outline>" << endl;
 }
 
 /*!
   \file outline.hh
-  \brief Defiens the Outline class
+  \brief Defines the Outline class
 */
 
 /*!
   \class Outline
-  \brief Class responcible for building and keeping an outline of a document.
+  \brief Class responsible for building and keeping an outline of a document.
 */
 
 /*!
@@ -203,7 +195,7 @@ bool Outline::replaceWebPage(int document,
 		headings[ qMakePair(location.first, qMakePair(location.second.y(), location.second.x()) ) ] = e;
 	}
 
-	//This huristic is a little strange, it tries to create a real tree,
+	//This heuristic is a little strange, it tries to create a real tree,
 	//even though someone puts a h5 below a h1 or stuff like that
 	//The way this is handled is having a level stack, indicating what h-tags
 	//a level level in the tree currently represents

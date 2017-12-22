@@ -18,21 +18,26 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with wkhtmltopdf.  If not, see <http://www.gnu.org/licenses/>.
 
+#ifndef __LOGGING_HH__
+#define __LOGGING_HH__
 
-#include "websettings.hh"
+#include <QMap>
+#include <QString>
+#include <wkhtmltox/dllbegin.inc>
 namespace wkhtmltopdf {
 namespace settings {
 
-Web::Web() :
-	background(true),
-	loadImages(true),
-	enableJavascript(true),
-	enableIntelligentShrinking(true),
-	minimumFontSize(-1),
-	printMediaType(false),
-	defaultEncoding(""),
-	userStyleSheet(""),
-	enablePlugins(false) {}
+enum LogLevel {
+	None,
+	Error,
+	Warn,
+	Info
+};
+
+DLL_PUBLIC LogLevel strToLogLevel(const char * s, bool * ok=0);
+DLL_PUBLIC QString logLevelToStr(const LogLevel & l, bool * ok=0);
 
 }
 }
+#include <wkhtmltox/dllend.inc>
+#endif //__LOGGING_HH__

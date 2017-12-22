@@ -176,7 +176,8 @@ PdfCommandLineParser::PdfCommandLineParser(PdfGlobal & s, QList<PdfObject> & ps)
 	extended(false);
 	qthack(false);
 
-	addarg("quiet", 'q', "Be less verbose", new ConstSetter<bool>(s.quiet,true));
+	addarg("quiet", 'q', "Be less verbose, maintained for backwards compatibility; Same as using --log-level none", new ConstSetter<LogLevel>(s.logLevel, None));
+	addarg("log-level", 0, "Set log level to: none, error, warn or info", new LogLevelSetter(s.logLevel, "level"));
 
 	addarg("no-collate", 0, "Do not collate when printing multiple copies", new ConstSetter<bool>(s.collate, false));
 	addarg("collate", 0, "Collate when printing multiple copies", new ConstSetter<bool>(s.collate, true));
@@ -194,8 +195,6 @@ PdfCommandLineParser::PdfCommandLineParser(PdfGlobal & s, QList<PdfObject> & ps)
 
 	extended(true);
  	qthack(false);
-	addarg("output-format",0, "Specify an output format to use pdf or ps, instead of looking at the extention of the output filename", new QStrSetter(s.outputFormat, "format"));
-
 	addarg("margin-bottom",'B',"Set the page bottom margin", new UnitRealSetter(s.margin.bottom,"unitreal"));
  	addarg("margin-left",'L',"Set the page left margin", new UnitRealSetter(s.margin.left,"unitreal"));
  	addarg("margin-right",'R',"Set the page right margin", new UnitRealSetter(s.margin.right,"unitreal"));
@@ -205,19 +204,16 @@ PdfCommandLineParser::PdfCommandLineParser(PdfGlobal & s, QList<PdfObject> & ps)
  	addarg("page-height", 0, "Page height", new UnitRealSetter(s.size.height,"unitreal"));
  	addarg("page-width", 0, "Page width", new UnitRealSetter(s.size.width,"unitreal"));
 
-// 	addarg("book",'b',"Set the options one would usually set when printing a book", new Caller<BookFunc>());
 	addGlobalLoadArgs(s.load);
-
 
 	extended(true);
  	qthack(true);
 
 	addarg("image-quality", 0, "When jpeg compressing images use this quality", new IntSetter(s.imageQuality,"integer"));
 	addarg("image-dpi", 0, "When embedding images scale them down to this dpi", new IntSetter(s.imageDPI, "integer"));
-
 	addarg("no-pdf-compression", 0 , "Do not use lossless compression on pdf objects", new ConstSetter<bool>(s.useCompression,false));
 
- #ifdef Q_WS_X11
+#ifdef Q_OS_UNIX
  	addarg("use-xserver",0,"Use the X server (some plugins and other stuff might not work without X11)", new ConstSetter<bool>(s.useGraphics,true));
 #endif
 
@@ -234,13 +230,12 @@ PdfCommandLineParser::PdfCommandLineParser(PdfGlobal & s, QList<PdfObject> & ps)
 	mode(page);
  	addarg("default-header",0,"Add a default header, with the name of the page to the left, and the page number to the right, this is short for: --header-left='[webpage]' --header-right='[page]/[toPage]' --top 2cm --header-line", new Caller<DefaultHeaderFunc>());
 
+	addarg("viewport-size", 0, "Set viewport size if you have custom scrollbars or css attribute overflow to emulate window size",new QStrSetter(s.viewportSize,""));
 	addWebArgs(od.web);
 	extended(true);
  	qthack(false);
-#if QT_VERSION >= 0x040500 //Not printing the background was added in QT4.5
  	addarg("no-background",0,"Do not print background", new ConstSetter<bool>(od.web.background, false));
  	addarg("background",0,"Do print background", new ConstSetter<bool>(od.web.background, true));
-#endif
 
 	extended(true);
  	qthack(true);
@@ -250,6 +245,8 @@ PdfCommandLineParser::PdfCommandLineParser(PdfGlobal & s, QList<PdfObject> & ps)
 	addarg("disable-smart-shrinking", 0, "Disable the intelligent shrinking strategy used by WebKit that makes the pixel/dpi ratio none constant",new ConstSetter<bool>(od.web.enableIntelligentShrinking, false));
  	addarg("enable-smart-shrinking", 0, "Enable the intelligent shrinking strategy used by WebKit that makes the pixel/dpi ratio none constant",new ConstSetter<bool>(od.web.enableIntelligentShrinking, true));
 
+	extended(false);
+ 	qthack(true);
 	addarg("print-media-type",0,"Use print media-type instead of screen", new ConstSetter<bool>(od.web.printMediaType,true));
 	addarg("no-print-media-type",0,"Do not use print media-type instead of screen", new ConstSetter<bool>(od.web.printMediaType, false));
 
@@ -261,6 +258,8 @@ PdfCommandLineParser::PdfCommandLineParser(PdfGlobal & s, QList<PdfObject> & ps)
  	addarg("enable-internal-links",0,"Make local links", new ConstSetter<bool>(od.useLocalLinks, true));
  	addarg("disable-external-links",0,"Do not make links to remote web pages", new ConstSetter<bool>(od.useExternalLinks, false));
  	addarg("enable-external-links",0,"Make links to remote web pages", new ConstSetter<bool>(od.useExternalLinks, true));
+ 	addarg("resolve-relative-links", 0, "Resolve relative external links into absolute links", new ConstSetter<bool>(s.resolveRelativeLinks, true));
+ 	addarg("keep-relative-links", 0, "Keep relative external links as relative external links", new ConstSetter<bool>(s.resolveRelativeLinks, false));
 
 	addarg("enable-toc-back-links",0,"Link from section header to toc", new ConstSetter<bool>(od.toc.backLinks,true));
 	addarg("disable-toc-back-links",0,"Do not link from section header to toc", new ConstSetter<bool>(od.toc.backLinks,false));
@@ -300,7 +299,7 @@ PdfCommandLineParser::PdfCommandLineParser(PdfGlobal & s, QList<PdfObject> & ps)
 
 	addarg("toc-header-text",0,"The header text of the toc", new QStrSetter(od.toc.captionText, "text"));
 	addarg("disable-toc-links",0,"Do not link from toc to sections", new ConstSetter<bool>(od.toc.forwardLinks, false));
-	addarg("disable-dotted-lines",0,"Do not use dottet lines in the toc", new ConstSetter<bool>(od.toc.useDottedLines,false));
-	addarg("toc-text-size-shrink",0,"For each level of headings in the toc the font is scaled by this facter", new FloatSetter(od.toc.fontScale, "real"));
+	addarg("disable-dotted-lines",0,"Do not use dotted lines in the toc", new ConstSetter<bool>(od.toc.useDottedLines,false));
+	addarg("toc-text-size-shrink",0,"For each level of headings in the toc the font is scaled by this factor", new FloatSetter(od.toc.fontScale, "real"));
 	addarg("toc-level-indentation",0,"For each level of headings in the toc indent by this length", new QStrSetter(od.toc.indentation, "width"));
 }

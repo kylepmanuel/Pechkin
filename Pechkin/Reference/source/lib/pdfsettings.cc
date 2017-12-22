@@ -18,11 +18,6 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with wkhtmltopdf.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifdef __WKHTMLTOX_UNDEF_QT_DLL__
-#ifdef QT_DLL
-#undef QT_DLL
-#endif
-#endif
 
 #ifdef _MSC_VER
 #define strcasecmp _stricmp
@@ -112,8 +107,10 @@ template<>
 struct DLL_LOCAL ReflectImpl<PdfGlobal>: public ReflectClass {
 	ReflectImpl(PdfGlobal & c) {
 		WKHTMLTOPDF_REFLECT(size);
-		WKHTMLTOPDF_REFLECT(quiet);
+		ReflectClass::add("quiet", new QuietArgBackwardsCompatReflect(c.logLevel));	// Fake the "quiet" argument
+		WKHTMLTOPDF_REFLECT(logLevel);
 		WKHTMLTOPDF_REFLECT(useGraphics);
+		WKHTMLTOPDF_REFLECT(resolveRelativeLinks);
 		WKHTMLTOPDF_REFLECT(orientation);
 		WKHTMLTOPDF_REFLECT(colorMode);
 		WKHTMLTOPDF_REFLECT(resolution);
@@ -122,15 +119,16 @@ struct DLL_LOCAL ReflectImpl<PdfGlobal>: public ReflectClass {
 		WKHTMLTOPDF_REFLECT(copies);
 		WKHTMLTOPDF_REFLECT(collate);
 		WKHTMLTOPDF_REFLECT(outline);
+		WKHTMLTOPDF_REFLECT(outlineDepth);
 		WKHTMLTOPDF_REFLECT(dumpOutline);
 		WKHTMLTOPDF_REFLECT(out);
 		WKHTMLTOPDF_REFLECT(documentTitle);
 		WKHTMLTOPDF_REFLECT(useCompression);
 		WKHTMLTOPDF_REFLECT(margin);
-		WKHTMLTOPDF_REFLECT(outputFormat);
 		WKHTMLTOPDF_REFLECT(imageDPI);
 		WKHTMLTOPDF_REFLECT(imageQuality);
 		WKHTMLTOPDF_REFLECT(load);
+		WKHTMLTOPDF_REFLECT(viewportSize);
 	}
 };
 
@@ -289,7 +287,7 @@ UnitReal strToUnitReal(const char * o, bool * ok) {
 	else if (!strcasecmp(o+i,"point") || !strcasecmp(o+i,"pt"))
 		u=QPrinter::Point;
 	else {
-		if (ok) ok=false;
+		if (ok) *ok=false;
 		return UnitReal(QString(o).left(i).toDouble()*s, u);
 	}
 	return UnitReal(QString(o).left(i).toDouble(ok)*s, u);
@@ -310,16 +308,17 @@ QString unitRealToStr(const UnitReal & ur, bool * ok) {
 	case QPrinter::Point: c = "pt"; break;
 	case QPrinter::Millimeter: c = "mm"; break;
 	default:
-		if (ok) *ok=false; break;
+		if (ok) *ok=false;
+		return "";
 	}
 	return QString("%1%2").arg(ur.first).arg(c);
 }
 
 QPrinter::PrinterMode strToPrinterMode(const char * s, bool * ok) {
 	if (ok) *ok=true;
-	if (strcmp(s,"screen"))	return QPrinter::ScreenResolution;
-	if (strcmp(s,"printer")) return QPrinter::PrinterResolution;
-	if (strcmp(s,"high")) return QPrinter::HighResolution;
+	if (!strcasecmp(s,"screen")) return QPrinter::ScreenResolution;
+	if (!strcasecmp(s,"printer")) return QPrinter::PrinterResolution;
+	if (!strcasecmp(s,"high")) return QPrinter::HighResolution;
 	*ok=false;
 	return QPrinter::HighResolution;
 }
@@ -335,8 +334,8 @@ QString printerModeToStr(QPrinter::PrinterMode o) {
 
 QPrinter::ColorMode strToColorMode(const char * s, bool * ok) {
 	if (ok) *ok=true;
-	if (strcmp(s,"color"))	return QPrinter::Color;
-	if (strcmp(s,"grayscale")) return QPrinter::GrayScale;
+	if (!strcasecmp(s,"color"))	return QPrinter::Color;
+	if (!strcasecmp(s,"grayscale")) return QPrinter::GrayScale;
 	*ok=false;
 	return QPrinter::Color;
 }
@@ -344,7 +343,7 @@ QPrinter::ColorMode strToColorMode(const char * s, bool * ok) {
 QString colorModeToStr(QPrinter::ColorMode o) {
 	switch (o) {
 	case QPrinter::Color: return "color";
-	case QPrinter::GrayScale: return "glayscale";
+	case QPrinter::GrayScale: return "grayscale";
 	}
 	return QString();
 }
@@ -365,18 +364,19 @@ HeaderFooter::HeaderFooter():
 	spacing(0.0) {}
 
 Margin::Margin():
-	top(UnitReal(10,QPrinter::Millimeter)),
+    top(UnitReal(-1,QPrinter::Millimeter)),
 	right(UnitReal(10,QPrinter::Millimeter)),
-	bottom(UnitReal(10,QPrinter::Millimeter)),
+    bottom(UnitReal(-1,QPrinter::Millimeter)),
 	left(UnitReal(10,QPrinter::Millimeter)) {}
 
 PdfGlobal::PdfGlobal():
-	quiet(false),
+	logLevel(Info),
 	useGraphics(false),
+	resolveRelativeLinks(true),
 	orientation(QPrinter::Portrait),
 	colorMode(QPrinter::Color),
 	resolution(QPrinter::HighResolution),
-	dpi(-1),
+	dpi(96),
 	pageOffset(0),
 	copies(1),
 	collate(true),
@@ -386,16 +386,17 @@ PdfGlobal::PdfGlobal():
 	out(""),
 	documentTitle(""),
 	useCompression(true),
+	viewportSize(""),
 	imageDPI(600),
-	imageQuality(94) {};
+	imageQuality(94){};
 
 TableOfContent::TableOfContent():
 	useDottedLines(true),
-	captionText("Table of Content"),
+	captionText("Table of Contents"),
 	forwardLinks(true),
 	backLinks(false),
 	indentation("1em"),
-	fontScale(0.8) {}
+	fontScale(0.8f) {}
 
 PdfObject::PdfObject():
 	useExternalLinks(true),
